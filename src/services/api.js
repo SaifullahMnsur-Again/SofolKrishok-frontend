@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace(/\/+$/, '');
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -125,6 +125,18 @@ export const diseaseAPI = {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
   getSupportedCrops: () => api.get('/ai/disease-detect/'),
+  // Farmer-accessible: returns only active disease models (no manager role needed)
+  getActiveCrops: () => api.get('/ai/active-disease-crops/'),
+  // Staff-only: full model inventory
+  getModelInventory: () => api.get('/ai/models/inventory/'),
+};
+
+// Crops for model hub dropdown
+export const cropAPI = {
+  getCrops: () => api.get('/ai/crops/'),
+  createCrop: (data) => api.post('/ai/crops/', data),
+  updateCrop: (id, data) => api.patch(`/ai/crops/${id}/`, data),
+  deleteCrop: (id) => api.delete(`/ai/crops/${id}/`),
 };
 
 // ============ Soil Classification ============
@@ -181,6 +193,24 @@ export const consultationAPI = {
   bookTicket: (data) => api.post('/consultation/tickets/book/', data),
   startSession: (id) => api.post(`/consultation/tickets/${id}/start_session/`),
   completeSession: (id, summary) => api.post(`/consultation/tickets/${id}/complete_session/`, { expert_summary: summary }),
+};
+
+// ============ AI Model Management ==========
+export const aiModelAPI = {
+  listModels: (params) => api.get('/ai/models/', { params }),
+  getModelInventory: () => api.get('/ai/models/inventory/'),
+  createModel: (formData) => api.post('/ai/models/', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  updateModel: (id, data) => {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
+    if (isFormData) {
+      return api.patch(`/ai/models/${id}/`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+    }
+    return api.patch(`/ai/models/${id}/`, data);
+  },
+  deleteModel: (id) => api.delete(`/ai/models/${id}/`),
+  activateModel: (id) => api.post(`/ai/models/${id}/activate/`),
+  getGeminiConfig: () => api.get('/ai/settings/gemini/'),
+  updateGeminiConfig: (data) => api.patch('/ai/settings/gemini/', data),
 };
 
 export default api;

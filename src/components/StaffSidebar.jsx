@@ -23,7 +23,7 @@ export default function StaffSidebar() {
       items: [
         { to: '/staff', icon: '📊', label: 'Overview', roles: ['sales', 'service', 'expert', 'sales_team_member', 'service_team_member', 'sales_team_lead', 'service_team_lead', 'branch_manager', 'general_manager', 'site_engineer'] },
         { to: '/staff/service', icon: '🤖', label: 'AI Services Hub', roles: ['service', 'service_team_member', 'service_team_lead', 'expert', 'branch_manager', 'general_manager'] },
-        { to: '/staff/model-hub', icon: '🧠', label: 'AI Model Hub', roles: ['service', 'service_team_member', 'service_team_lead', 'site_engineer'] },
+        { to: '/staff/model-hub', icon: '🧠', label: 'AI Model Hub', roles: ['general_manager', 'service_team_lead'] },
       ],
     },
     {
