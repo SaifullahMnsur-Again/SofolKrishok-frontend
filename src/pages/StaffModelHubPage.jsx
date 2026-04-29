@@ -41,6 +41,28 @@ function formatBytes(bytes) {
   return `${value.toFixed(value >= 10 ? 1 : 2)} ${units[unitIndex]}`;
 }
 
+function formatDateTime(value) {
+  if (!value) return '-';
+  try {
+    return new Date(value).toLocaleString();
+  } catch {
+    return String(value);
+  }
+}
+
+const USAGE_HISTORY_INITIAL_FILTERS = {
+  service_name: '',
+  operation: '',
+  user_role: '',
+  subscription_plan_type: '',
+  subscription_status: '',
+  success: '',
+  condition: '',
+  model_identifier: '',
+  start: '',
+  end: '',
+};
+
 function DiseaseRow({ model, onEdit, onActivate, onOffline, onDelete, busyId }) {
   const busy = busyId === model.id;
 
@@ -371,6 +393,317 @@ function GeminiConfigPanel() {
             {modelsSaving ? <span className="loading-spinner" style={{ width: 16, height: 16 }} /> : 'Save Models'}
           </button>
         </div>
+      </section>
+    </div>
+  );
+}
+
+function UsageHistoryPanel() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [filters, setFilters] = useState(USAGE_HISTORY_INITIAL_FILTERS);
+  const [summary, setSummary] = useState({ total: 0, successful: 0, failed: 0 });
+  const [stats, setStats] = useState({ by_service: [], by_model: [], by_role: [], by_subscription_plan: [], daily_usage: [], avg_confidence: null });
+  const [pageData, setPageData] = useState({ count: 0, next: null, previous: null, results: [] });
+  const [page, setPage] = useState(1);
+
+  const loadUsage = async (pageNumber = 1, nextFilters = filters) => {
+    setLoading(true);
+    setError('');
+    try {
+      const params = {
+        ...nextFilters,
+        page: pageNumber,
+      };
+      const [historyRes, statsRes] = await Promise.all([
+        aiModelAPI.getUsageHistory(params),
+        aiModelAPI.getUsageStats(params),
+      ]);
+
+      const historyData = historyRes.data || {};
+      setPageData({
+        count: historyData.count || 0,
+        next: historyData.next || null,
+        previous: historyData.previous || null,
+        results: historyData.results || [],
+      });
+      setSummary(historyData.summary || { total: 0, successful: 0, failed: 0 });
+      setStats(statsRes.data || { by_service: [], by_model: [], by_role: [], by_subscription_plan: [], daily_usage: [], avg_confidence: null });
+      setPage(pageNumber);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to load usage history.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsage(1, filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleApplyFilters = () => {
+    loadUsage(1, filters);
+  };
+
+  const handleResetFilters = () => {
+    setFilters(USAGE_HISTORY_INITIAL_FILTERS);
+    loadUsage(1, USAGE_HISTORY_INITIAL_FILTERS);
+  };
+
+  const renderTopItems = (items = [], key = 'name') => {
+    if (!items.length) {
+      return <div style={{ color: '#64748b', fontSize: '0.82rem' }}>No data yet.</div>;
+    }
+
+    return items.slice(0, 3).map((item) => (
+      <div key={String(item[key] || 'blank')} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: '0.82rem', padding: '5px 0', borderBottom: '1px solid rgba(148,163,184,0.14)' }}>
+        <span style={{ color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item[key] || 'Unspecified'}</span>
+        <strong style={{ color: '#0f172a' }}>{item.count || 0}</strong>
+      </div>
+    ));
+  };
+
+  const renderUsageChart = (dailyUsage = []) => {
+    const values = dailyUsage.slice(-14);
+    const maxCount = Math.max(1, ...values.map((item) => Number(item.count) || 0));
+
+    if (!values.length) {
+      return <div style={{ color: '#64748b', fontSize: '0.82rem' }}>No chart data yet.</div>;
+    }
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, minHeight: 220, paddingTop: 10, overflowX: 'auto' }}>
+        {values.map((item) => {
+          const height = Math.max(10, ((Number(item.count) || 0) / maxCount) * 160);
+          const label = item.date ? new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '-';
+
+          return (
+            <div key={item.date || label} style={{ flex: '0 0 42px', display: 'grid', justifyItems: 'center', gap: 6 }}>
+              <div style={{ fontSize: '0.75rem', color: '#0f172a', fontWeight: 700 }}>{item.count || 0}</div>
+              <div style={{ width: 22, height, borderRadius: '12px 12px 6px 6px', background: 'linear-gradient(180deg, rgba(59,130,246,0.95), rgba(14,165,233,0.35))', boxShadow: '0 10px 20px rgba(59,130,246,0.15)' }} />
+              <div style={{ fontSize: '0.7rem', color: '#64748b', writingMode: 'vertical-rl', transform: 'rotate(180deg)', height: 58, textAlign: 'center' }}>{label}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ display: 'grid', gap: '1rem' }}>
+      <section className="card" style={{ padding: '1rem 1.1rem', background: 'rgba(255,255,255,0.93)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <div>
+            <h4 style={{ margin: 0 }}>Model Usage History</h4>
+            <p style={{ margin: '0.3rem 0 0', color: '#64748b', fontSize: '0.84rem' }}>
+              Review which model was used, when it was called, who used it, and the subscriber snapshot attached to each request.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: 999, background: 'rgba(59,130,246,0.08)', color: '#1d4ed8' }}>
+              Total: {summary.total || pageData.count || 0}
+            </span>
+            <span style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: 999, background: 'rgba(16,185,129,0.1)', color: '#047857' }}>
+              Successful: {summary.successful || 0}
+            </span>
+            <span style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: 999, background: 'rgba(239,68,68,0.1)', color: '#b91c1c' }}>
+              Failed: {summary.failed || 0}
+            </span>
+            <span style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: 999, background: 'rgba(148,163,184,0.12)', color: '#475569' }}>
+              Avg confidence: {stats.avg_confidence == null ? '-' : `${Number(stats.avg_confidence).toFixed(1)}%`}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {error ? <div style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(239,68,68,0.1)', color: '#b91c1c', border: '1px solid rgba(239,68,68,0.2)' }}>{error}</div> : null}
+
+      <section className="card" style={{ padding: '1rem 1.1rem', background: 'rgba(255,255,255,0.93)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+          <div className="input-group">
+            <label className="input-label">Service</label>
+            <select className="input-field" value={filters.service_name} onChange={(e) => setFilters((cur) => ({ ...cur, service_name: e.target.value }))}>
+              <option value="">All services</option>
+              <option value="disease_detection">Disease detection</option>
+              <option value="soil_classification">Soil classification</option>
+              <option value="gemini_chat">Gemini chat</option>
+              <option value="voice_command">Voice command</option>
+              <option value="weather_forecast">Weather forecast</option>
+            </select>
+          </div>
+          <div className="input-group">
+            <label className="input-label">Operation</label>
+            <input className="input-field" value={filters.operation} onChange={(e) => setFilters((cur) => ({ ...cur, operation: e.target.value }))} placeholder="disease_detection" />
+          </div>
+          <div className="input-group">
+            <label className="input-label">Model</label>
+            <input className="input-field" value={filters.model_identifier} onChange={(e) => setFilters((cur) => ({ ...cur, model_identifier: e.target.value }))} placeholder="rice model, gemini-2.5" />
+          </div>
+          <div className="input-group">
+            <label className="input-label">Role</label>
+            <select className="input-field" value={filters.user_role} onChange={(e) => setFilters((cur) => ({ ...cur, user_role: e.target.value }))}>
+              <option value="">All roles</option>
+              <option value="farmer">Farmer</option>
+              <option value="service">Service</option>
+              <option value="service_team_member">Service Team Member</option>
+              <option value="service_team_lead">Service Team Lead</option>
+              <option value="general_manager">General Manager</option>
+              <option value="expert">Expert</option>
+            </select>
+          </div>
+          <div className="input-group">
+            <label className="input-label">Plan type</label>
+            <select className="input-field" value={filters.subscription_plan_type} onChange={(e) => setFilters((cur) => ({ ...cur, subscription_plan_type: e.target.value }))}>
+              <option value="">All plan types</option>
+              <option value="primary">Primary</option>
+              <option value="addon">Add-on</option>
+            </select>
+          </div>
+          <div className="input-group">
+            <label className="input-label">Subscription status</label>
+            <select className="input-field" value={filters.subscription_status} onChange={(e) => setFilters((cur) => ({ ...cur, subscription_status: e.target.value }))}>
+              <option value="">All statuses</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div className="input-group">
+            <label className="input-label">Success</label>
+            <select className="input-field" value={filters.success} onChange={(e) => setFilters((cur) => ({ ...cur, success: e.target.value }))}>
+              <option value="">All outcomes</option>
+              <option value="true">Success</option>
+              <option value="false">Failed</option>
+            </select>
+          </div>
+          <div className="input-group">
+            <label className="input-label">Condition</label>
+            <select className="input-field" value={filters.condition} onChange={(e) => setFilters((cur) => ({ ...cur, condition: e.target.value }))}>
+              <option value="">No preset</option>
+              <option value="today">Today</option>
+              <option value="this_week">This week</option>
+              <option value="this_month">This month</option>
+              <option value="high_confidence">High confidence</option>
+              <option value="training_ready">Training ready</option>
+              <option value="errors">Errors</option>
+            </select>
+          </div>
+          <div className="input-group">
+            <label className="input-label">Start</label>
+            <input className="input-field" type="date" value={filters.start} onChange={(e) => setFilters((cur) => ({ ...cur, start: e.target.value }))} />
+          </div>
+          <div className="input-group">
+            <label className="input-label">End</label>
+            <input className="input-field" type="date" value={filters.end} onChange={(e) => setFilters((cur) => ({ ...cur, end: e.target.value }))} />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={handleResetFilters} disabled={loading}>Reset</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={handleApplyFilters} disabled={loading}>Apply filters</button>
+        </div>
+      </section>
+
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+        <div className="card" style={{ padding: '0.95rem 1rem' }}>
+          <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 600 }}>Top services</div>
+          <div style={{ marginTop: 8 }}>{renderTopItems(stats.by_service, 'service_name')}</div>
+        </div>
+        <div className="card" style={{ padding: '0.95rem 1rem' }}>
+          <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 600 }}>Top models</div>
+          <div style={{ marginTop: 8 }}>{renderTopItems(stats.by_model, 'model_identifier')}</div>
+        </div>
+        <div className="card" style={{ padding: '0.95rem 1rem' }}>
+          <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 600 }}>By role</div>
+          <div style={{ marginTop: 8 }}>{renderTopItems(stats.by_role, 'user_role')}</div>
+        </div>
+        <div className="card" style={{ padding: '0.95rem 1rem' }}>
+          <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 600 }}>By plan</div>
+          <div style={{ marginTop: 8 }}>{renderTopItems(stats.by_subscription_plan, 'subscription_plan_name')}</div>
+        </div>
+      </section>
+
+      <section className="card" style={{ padding: '1rem 1.1rem', background: 'rgba(255,255,255,0.93)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 600 }}>Usage volume</div>
+            <h5 style={{ margin: '4px 0 0', color: '#0f172a' }}>Daily model calls</h5>
+          </div>
+          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Last 14 days from the current filter set</div>
+        </div>
+        <div style={{ marginTop: 8, borderRadius: 16, border: '1px solid rgba(148,163,184,0.16)', background: 'linear-gradient(180deg, rgba(248,250,252,0.95), rgba(255,255,255,0.98))', padding: '0.9rem 0.9rem 0.3rem' }}>
+          {renderUsageChart(stats.daily_usage || [])}
+        </div>
+      </section>
+
+      <section className="card" style={{ padding: '1rem 1.1rem', background: 'rgba(255,255,255,0.93)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ color: '#64748b', fontSize: '0.84rem' }}>
+            Showing {pageData.results.length} of {pageData.count || 0} records
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={loading || !pageData.previous} onClick={() => loadUsage(Math.max(1, page - 1), filters)}>
+              Previous
+            </button>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={loading || !pageData.next} onClick={() => loadUsage(page + 1, filters)}>
+              Next
+            </button>
+          </div>
+        </div>
+
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
+            <div className="loading-spinner" style={{ width: 32, height: 32 }} />
+          </div>
+        ) : pageData.results.length === 0 ? (
+          <div style={{ color: '#64748b', fontSize: '0.9rem', padding: '1rem 0' }}>No usage history matches the current filters.</div>
+        ) : (
+          <div style={{ display: 'grid', gap: 10 }}>
+            {pageData.results.map((item) => (
+              <details key={item.id} style={{ border: '1px solid rgba(148,163,184,0.18)', borderRadius: 14, background: 'rgba(248,250,252,0.96)', padding: '0.8rem 0.95rem' }}>
+                <summary style={{ cursor: 'pointer', listStyle: 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{item.model_display_name || item.model_identifier || item.service_name}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                        {formatDateTime(item.created_at)} · {item.username || 'Anonymous'} · {item.user_role || 'unknown role'}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.72rem', padding: '3px 8px', borderRadius: 999, background: 'rgba(59,130,246,0.1)', color: '#1d4ed8' }}>{item.service_name}</span>
+                      <span style={{ fontSize: '0.72rem', padding: '3px 8px', borderRadius: 999, background: item.success ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.1)', color: item.success ? '#047857' : '#b91c1c' }}>{item.success ? 'Success' : 'Failed'}</span>
+                      {item.confidence != null ? <span style={{ fontSize: '0.72rem', padding: '3px 8px', borderRadius: 999, background: 'rgba(148,163,184,0.12)', color: '#475569' }}>{Number(item.confidence).toFixed(1)}%</span> : null}
+                    </div>
+                  </div>
+                </summary>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8, marginTop: 12, fontSize: '0.84rem', color: '#334155' }}>
+                  <div><strong>Model:</strong> {item.model_identifier || '-'}</div>
+                  <div><strong>Version:</strong> {item.model_version || '-'}</div>
+                  <div><strong>Plan:</strong> {item.subscription_plan_name || '-'} {item.subscription_plan_type ? `(${item.subscription_plan_type})` : ''}</div>
+                  <div><strong>Status:</strong> {item.subscription_status || '-'}</div>
+                  <div><strong>Path:</strong> {item.request_path || '-'}</div>
+                  <div><strong>Response time:</strong> {item.response_time_ms != null ? `${item.response_time_ms} ms` : '-'}</div>
+                </div>
+                <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
+                  <div>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Request metadata</div>
+                    <pre style={{ margin: 0, padding: '0.7rem', borderRadius: 10, background: '#fff', border: '1px solid rgba(148,163,184,0.16)', overflowX: 'auto', fontSize: '0.78rem' }}>{JSON.stringify(item.request_metadata || {}, null, 2)}</pre>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#64748b', marginBottom: 4 }}>Response metadata</div>
+                    <pre style={{ margin: 0, padding: '0.7rem', borderRadius: 10, background: '#fff', border: '1px solid rgba(148,163,184,0.16)', overflowX: 'auto', fontSize: '0.78rem' }}>{JSON.stringify(item.response_metadata || {}, null, 2)}</pre>
+                  </div>
+                  {item.error_message ? (
+                    <div style={{ fontSize: '0.82rem', color: '#b91c1c', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.12)', borderRadius: 10, padding: '0.7rem' }}>
+                      {item.error_message}
+                    </div>
+                  ) : null}
+                </div>
+              </details>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
@@ -793,6 +1126,18 @@ export default function StaffModelHubPage() {
           }}
         >
           Gemini
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('usage-history')}
+          className="btn btn-sm"
+          style={{
+            background: activeTab === 'usage-history' ? 'linear-gradient(135deg, var(--primary-500), var(--primary-600))' : 'rgba(255,255,255,0.82)',
+            color: activeTab === 'usage-history' ? '#fff' : '#334155',
+            border: '1px solid rgba(148,163,184,0.24)',
+          }}
+        >
+          Usage History
         </button>
       </div>
 
@@ -1481,6 +1826,7 @@ export default function StaffModelHubPage() {
       )}
 
       {activeTab === 'gemini' && <GeminiConfigPanel />}
+      {activeTab === 'usage-history' && <UsageHistoryPanel />}
 
     </div>
   );

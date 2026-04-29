@@ -157,7 +157,7 @@ export default function LandingPage() {
 
           {/* Floating feature chips */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 48 }}>
-            {['🔬 AI Disease Detection', '🌱 Soil Analysis', '🤖 Gemini AI Chat', '🛒 Marketplace', '🩺 Expert Consult', '📊 Profit Tracker'].map((chip) => (
+            {['🔬 AI Disease Detection', '🌱 Soil Analysis', '🤖 AI Assistant Chat', '🛒 Marketplace', '🩺 Expert Consult', '📊 Profit Tracker'].map((chip) => (
               <span key={chip} style={{
                 padding: '5px 14px', borderRadius: 99, fontSize: '0.78rem', fontWeight: 500,
                 background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',

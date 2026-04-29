@@ -206,6 +206,8 @@ export const consultationAPI = {
 export const aiModelAPI = {
   listModels: (params) => api.get('/ai/models/', { params }),
   getModelInventory: () => api.get('/ai/models/inventory/'),
+  getUsageHistory: (params) => api.get('/ai/model-usage/', { params }),
+  getUsageStats: (params) => api.get('/ai/model-usage/stats/', { params }),
   createModel: (formData) => api.post('/ai/models/', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   updateModel: (id, data) => {
     const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
