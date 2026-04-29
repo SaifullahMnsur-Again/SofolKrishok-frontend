@@ -88,7 +88,12 @@ export default function StaffSidebar() {
       </div>
 
       <div className="sidebar-user">
-        <div className="sidebar-avatar">{initials.toUpperCase()}</div>
+        <div className="sidebar-avatar" style={{ overflow: 'hidden', padding: user?.avatar ? 0 : undefined }}>
+          {user?.avatar
+            ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            : initials.toUpperCase()
+          }
+        </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {user?.first_name || user?.username}

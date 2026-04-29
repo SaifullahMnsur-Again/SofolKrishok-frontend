@@ -34,6 +34,11 @@ import StaffUserManagementPage from './pages/StaffUserManagementPage';
 import StaffAuditLogsPage from './pages/StaffAuditLogsPage';
 import ConsultationRoomPage from './pages/ConsultationRoomPage';
 import { LanguageProvider } from './context/LanguageContext';
+/* Public pages */
+import LandingPage from './pages/public/LandingPage';
+import FeaturesPage from './pages/public/FeaturesPage';
+import AboutPage from './pages/public/AboutPage';
+import PricingPage from './pages/public/PricingPage';
 import './index.css';
 
 function App() {
@@ -44,6 +49,10 @@ function App() {
         <BrowserRouter>
           <Routes>
             {/* Public routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
@@ -85,9 +94,8 @@ function App() {
               <Route path="audit-logs" element={<StaffAuditLogsPage />} />
             </Route>
 
-            {/* Redirect root to dashboard */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            {/* Catch-all: redirect unknown paths to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

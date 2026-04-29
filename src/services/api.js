@@ -46,7 +46,14 @@ export const authAPI = {
   register: (data) => api.post('/auth/register/', data),
   login: (data) => api.post('/auth/login/', data),
   getProfile: () => api.get('/auth/profile/'),
-  updateProfile: (data) => api.put('/auth/profile/', data),
+  updateProfile: (data) => api.patch('/auth/profile/', data),
+  uploadAvatar: (file) => {
+    const fd = new FormData();
+    fd.append('avatar', file);
+    return api.post('/auth/avatar/', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  removeAvatar: () => api.delete('/auth/avatar/'),
+  changePassword: (data) => api.post('/auth/change-password/', data),
   getUsers: () => api.get('/auth/users/'),
   updateUser: (id, data) => api.patch(`/auth/manage/${id}/`, data),
   getUserActivity: (id) => api.get(`/auth/manage/${id}/activity/`),

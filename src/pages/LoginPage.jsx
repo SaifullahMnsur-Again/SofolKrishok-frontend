@@ -47,6 +47,9 @@ export default function LoginPage() {
         </div>
         <h1 className="auth-title">Welcome Back</h1>
         <p className="auth-subtitle">Sign in to SofolKrishok — your smart farming companion</p>
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
+          <Link to="/" style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textDecoration: 'none' }}>← Back to homepage</Link>
+        </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && (
@@ -92,6 +95,8 @@ export default function LoginPage() {
 
         <div className="auth-footer">
           Don't have an account? <Link to="/register">Create one</Link>
+          <span style={{ margin: '0 8px', color: 'var(--text-muted)' }}>·</span>
+          <Link to="/" style={{ color: 'var(--text-muted)' }}>Learn more</Link>
         </div>
       </div>
     </div>

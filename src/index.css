@@ -1553,6 +1553,14 @@ select.input-field {
   }
 }
 
+@media (max-width: 680px) {
+  /* Profile page: single column on mobile */
+  .profile-two-col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
 /* ============================================
    Scrollbar Styling
    ============================================ */
