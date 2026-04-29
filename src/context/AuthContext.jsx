@@ -53,8 +53,10 @@ export function AuthProvider({ children }) {
     setUser(updated);
   };
 
+  const isAuthenticated = !!user && !loading;
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

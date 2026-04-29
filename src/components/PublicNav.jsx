@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const navLinks = [
   { to: '/', label: 'Home' },
@@ -10,7 +11,21 @@ const navLinks = [
 
 export default function PublicNav() {
   const { pathname } = useLocation();
+  const { user, logout, isAuthenticated } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const staffRoles = new Set([
+    'general_manager',
+    'site_engineer',
+    'branch_manager',
+    'sales',
+    'service',
+    'expert',
+    'sales_team_lead',
+    'service_team_member',
+    'sales_team_member',
+  ]);
+  const isStaff = user?.role && staffRoles.has(user.role);
 
   return (
     <>
@@ -57,31 +72,82 @@ export default function PublicNav() {
             ))}
           </div>
 
-          {/* Auth buttons */}
+          {/* Auth buttons / User info */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Link to="/login" style={{
-              padding: '8px 18px', borderRadius: 10, fontWeight: 600, fontSize: '0.88rem',
-              color: '#94a3b8', textDecoration: 'none',
-              border: '1px solid rgba(255,255,255,0.1)', background: 'transparent',
-              transition: 'all 0.15s',
-            }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
-            >
-              Sign In
-            </Link>
-            <Link to="/register" style={{
-              padding: '8px 18px', borderRadius: 10, fontWeight: 700, fontSize: '0.88rem',
-              background: 'linear-gradient(135deg,#22c55e,#16a34a)',
-              color: '#fff', textDecoration: 'none',
-              boxShadow: '0 4px 14px rgba(34,197,94,0.25)',
-              transition: 'box-shadow 0.15s, transform 0.15s',
-            }}
-              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 6px 20px rgba(34,197,94,0.4)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 4px 14px rgba(34,197,94,0.25)'; e.currentTarget.style.transform = ''; }}
-            >
-              🌾 Get Started
-            </Link>
+            {isAuthenticated && user ? (
+              <>
+                <Link to={isStaff ? '/staff' : '/dashboard'} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '7px 14px', borderRadius: 10,
+                  background: 'rgba(34,197,94,0.08)',
+                  border: '1.5px solid rgba(34,197,94,0.25)',
+                  color: '#4ade80', textDecoration: 'none',
+                  transition: 'all 0.15s', fontWeight: 600, fontSize: '0.87rem',
+                }}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.background = 'rgba(34,197,94,0.15)';
+                    e.currentTarget.style.borderColor = 'rgba(34,197,94,0.4)';
+                    e.currentTarget.style.color = '#22c55e';
+                  }}
+                  onMouseLeave={(e) => { 
+                    e.currentTarget.style.background = 'rgba(34,197,94,0.08)';
+                    e.currentTarget.style.borderColor = 'rgba(34,197,94,0.25)';
+                    e.currentTarget.style.color = '#4ade80';
+                  }}
+                >
+                  <span style={{ fontSize: '1rem' }}>👤</span>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'inherit' }}>
+                    {user.first_name || user.username || 'User'}
+                  </div>
+                </Link>
+
+                <button onClick={logout} style={{
+                  padding: '7px 14px', borderRadius: 10, fontWeight: 600, fontSize: '0.87rem',
+                  color: '#ef4444',
+                  border: '1.5px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.08)',
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.color = '#ff6b6b';
+                    e.currentTarget.style.background = 'rgba(239,68,68,0.15)';
+                    e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)';
+                  }}
+                  onMouseLeave={(e) => { 
+                    e.currentTarget.style.color = '#ef4444';
+                    e.currentTarget.style.background = 'rgba(239,68,68,0.08)';
+                    e.currentTarget.style.borderColor = 'rgba(239,68,68,0.25)';
+                  }}
+                >
+                  🚪 Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" style={{
+                  padding: '8px 18px', borderRadius: 10, fontWeight: 600, fontSize: '0.88rem',
+                  color: '#94a3b8', textDecoration: 'none',
+                  border: '1px solid rgba(255,255,255,0.1)', background: 'transparent',
+                  transition: 'all 0.15s',
+                }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                >
+                  Sign In
+                </Link>
+                <Link to="/register" style={{
+                  padding: '8px 18px', borderRadius: 10, fontWeight: 700, fontSize: '0.88rem',
+                  background: 'linear-gradient(135deg,#22c55e,#16a34a)',
+                  color: '#fff', textDecoration: 'none',
+                  boxShadow: '0 4px 14px rgba(34,197,94,0.25)',
+                  transition: 'box-shadow 0.15s, transform 0.15s',
+                }}
+                  onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 6px 20px rgba(34,197,94,0.4)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 4px 14px rgba(34,197,94,0.25)'; e.currentTarget.style.transform = ''; }}
+                >
+                  🌾 Get Started
+                </Link>
+              </>
+            )}
 
             {/* Mobile hamburger */}
             <button
