@@ -7,7 +7,7 @@ export default function FarmerTracksPage() {
   const [lands, setLands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEnroll, setShowEnroll] = useState(false);
-  const [formData, setFormData] = useState({ land: '', crop_name: '', season: '' });
+  const [formData, setFormData] = useState({ land: '', crop_name: '', season: '', planted_date: '', expected_harvest_date: '', status: 'active' });
 
   const fetchData = async () => {
     try {
@@ -34,7 +34,7 @@ export default function FarmerTracksPage() {
     try {
       await farmingAPI.createTrack(formData);
       setShowEnroll(false);
-      setFormData({ land: '', crop_name: '', season: '' });
+      setFormData({ land: '', crop_name: '', season: '', planted_date: '', expected_harvest_date: '', status: 'active' });
       fetchData();
     } catch (err) {
       alert("Enrollment failed. Ensure all fields are filled.");
@@ -72,6 +72,23 @@ export default function FarmerTracksPage() {
               <label style={{ fontSize: '0.8rem', opacity: 0.8 }}>Season Name</label>
               <input className="input" style={{ width: '100%' }} placeholder="e.g. Winter 2026" value={formData.season} onChange={e => setFormData({ ...formData, season: e.target.value })} required />
             </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', opacity: 0.8 }}>Planting Date</label>
+              <input className="input" style={{ width: '100%' }} type="date" value={formData.planted_date} onChange={e => setFormData({ ...formData, planted_date: e.target.value })} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', opacity: 0.8 }}>Expected Harvest</label>
+              <input className="input" style={{ width: '100%' }} type="date" value={formData.expected_harvest_date} onChange={e => setFormData({ ...formData, expected_harvest_date: e.target.value })} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', opacity: 0.8 }}>Crop Status</label>
+              <select className="input" style={{ width: '100%' }} value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
+                <option value="planning">Planning</option>
+                <option value="active">Ongoing</option>
+                <option value="harvested">Harvested</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem' }}>
               <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Confirm</button>
               <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowEnroll(false)}>Cancel</button>
@@ -93,6 +110,11 @@ export default function FarmerTracksPage() {
                 </div>
                 <h3 style={{ margin: '0 0 0.5rem 0' }}>{track.crop_name}</h3>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>📍 {track.land_name || 'Land Parcel'}</p>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 8 }}>
+                  {track.planted_date ? `🌱 From ${track.planted_date}` : '🌱 Planting date not set'}
+                  {' '}
+                  {track.actual_harvest_date ? `to ${track.actual_harvest_date}` : track.expected_harvest_date ? `to expected ${track.expected_harvest_date}` : 'to ongoing'}
+                </div>
                 <div style={{ marginTop: '1.5rem', height: '6px', background: 'rgba(0,0,0,0.05)', borderRadius: '3px', position: 'relative' }}>
                    <div style={{ width: track.status === 'active' ? '40%' : '5%', height: '100%', background: 'var(--primary-color)', borderRadius: '3px' }}></div>
                 </div>

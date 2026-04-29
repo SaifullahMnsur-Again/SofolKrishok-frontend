@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { farmingAPI } from '../services/api';
 
 export default function LandsPage() {
@@ -80,6 +81,15 @@ export default function LandsPage() {
           error: 'Unable to load history right now.',
         },
       }));
+    }
+  };
+
+  const formatTimelineDate = (value) => {
+    if (!value) return '-';
+    try {
+      return new Date(value).toLocaleString();
+    } catch {
+      return value;
     }
   };
 
@@ -190,16 +200,18 @@ export default function LandsPage() {
                 </div>
               )}
               <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                <Link to={`/land/${land.id}`} className="btn btn-primary btn-sm" style={{ flex: 1 }}>
+                  👁️ View Details
+                </Link>
                 <a href={`/soil-classify`} className="btn btn-secondary btn-sm" style={{ flex: 1 }}>
                   🌱 Classify Soil
                 </a>
-                <a href={`/chat`} className="btn btn-primary btn-sm" style={{ flex: 1 }}>
+                <a href={`/chat`} className="btn btn-secondary btn-sm" style={{ flex: 1 }}>
                   🤖 Ask AI
                 </a>
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
-                  style={{ flex: 1 }}
                   onClick={() => toggleHistory(land.id)}
                 >
                   🕰️ History
@@ -251,6 +263,26 @@ export default function LandsPage() {
                               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>
                                 {entry.summary} • {entry.track?.season || 'Season not set'}
                               </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div style={{ fontSize: '0.9rem', fontWeight: 700, margin: '14px 0 10px' }}>Activity Memory</div>
+                      {(historyByLandId[land.id]?.data?.activity_history || []).length === 0 ? (
+                        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>No irrigation, fertilizer, pesticide, or harvest logs yet.</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {historyByLandId[land.id].data.activity_history.map((entry) => (
+                            <div key={entry.id} style={{ padding: 10, borderRadius: 12, background: 'rgba(255,255,255,0.04)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: '0.82rem', fontWeight: 700 }}>
+                                <span style={{ textTransform: 'capitalize' }}>{entry.activity_type}</span>
+                                <span style={{ color: 'var(--text-secondary)' }}>{formatTimelineDate(entry.occurred_at)}</span>
+                              </div>
+                              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+                                {entry.track?.crop_name || 'Crop cycle'}{entry.quantity ? ` • ${entry.quantity} ${entry.unit || ''}` : ''}
+                              </div>
+                              {entry.notes ? <div style={{ fontSize: '0.78rem', marginTop: 4 }}>{entry.notes}</div> : null}
                             </div>
                           ))}
                         </div>

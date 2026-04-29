@@ -103,8 +103,15 @@ export const farmingAPI = {
   getTrack: (id) => api.get(`/farming/tracks/${id}/`),
   createTrack: (data) => api.post('/farming/tracks/', data),
   updateTrack: (id, data) => api.put(`/farming/tracks/${id}/`, data),
+  getTrackActivities: (id) => api.get(`/farming/tracks/${id}/activities/`),
+  createTrackActivity: (id, data) => api.post(`/farming/tracks/${id}/activities/`, data),
   getStages: (trackId) => api.get('/farming/stages/', { params: { track: trackId } }),
   updateStage: (id, data) => api.put(`/farming/stages/${id}/`, data),
+  getCycles: () => api.get('/farming/cycles/'),
+  getCycle: (id) => api.get(`/farming/cycles/${id}/`),
+  createCycle: (data) => api.post('/farming/cycles/', data),
+  updateCycle: (id, data) => api.put(`/farming/cycles/${id}/`, data),
+  deleteCycle: (id) => api.delete(`/farming/cycles/${id}/`),
   getWeather: (params) => api.get('/farming/weather/', { params }),
 };
 

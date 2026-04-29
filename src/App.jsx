@@ -18,6 +18,7 @@ import FarmerOrdersPage from './pages/FarmerOrdersPage';
 import FarmerConsultationPage from './pages/FarmerConsultationPage';
 import FarmerTracksPage from './pages/FarmerTracksPage';
 import TrackDetailPage from './pages/TrackDetailPage';
+import LandDetailPage from './pages/LandDetailPage';
 import MarketPredictionPage from './pages/MarketPredictionPage';
 import FarmerProfitLossPage from './pages/FarmerProfitLossPage';
 import FarmerBillingPage from './pages/FarmerBillingPage';
@@ -64,6 +65,7 @@ function App() {
               <Route path="/disease-detect" element={<DiseaseDetectPage />} />
               <Route path="/soil-classify" element={<SoilClassifyPage />} />
               <Route path="/lands" element={<LandsPage />} />
+              <Route path="/land/:id" element={<LandDetailPage />} />
               <Route path="/weather" element={<FarmingWeatherPage />} />
               <Route path="/marketplace" element={<MarketplacePage />} />
               <Route path="/marketplace/product/:productId" element={<MarketplaceProductDetailsPage />} />
