@@ -87,13 +87,19 @@ export const farmingAPI = {
   getLands: async () => {
     try {
       const res = await api.get('/farming/lands/');
-      const data = res.data.results || res.data;
-      cacheData('lands', data); // Sync to IndexedDB
+      const data = res.data?.results || res.data;
+
+      if (Array.isArray(data) || (data && typeof data === 'object')) {
+        cacheData('lands', data);
+      } else {
+        console.warn('Invalid lands response structure:', res.data);
+      }
+
       return res;
     } catch (err) {
       if (!window.navigator.onLine) {
         const cached = await getCachedData('lands');
-        return { data: cached, fromCache: true };
+        return { data: cached || [], fromCache: true };
       }
       throw err;
     }
@@ -103,33 +109,21 @@ export const farmingAPI = {
   updateLand: (id, data) => api.put(`/farming/lands/${id}/`, data),
   deleteLand: (id) => api.delete(`/farming/lands/${id}/`),
   getLandHistory: (id) => api.get(`/farming/lands/${id}/history/`),
-  // SOLUTION #5: Added response validation
-  // SOLUTION #5: Added response validation
   getTracks: async () => {
     try {
       const res = await api.get('/farming/tracks/');
       const data = res.data?.results || res.data;
-      
-      // Validate response before caching
-      if (data && Array.isArray(data)) {
-        cacheData('tracks', data);
-      } else if (data && typeof data === 'object') {
+
+      if (Array.isArray(data) || (data && typeof data === 'object')) {
         cacheData('tracks', data);
       } else {
         console.warn('Invalid tracks response structure:', res.data);
       }
+
       return res;
     } catch (err) {
       if (!window.navigator.onLine) {
         const cached = await getCachedData('tracks');
-        return { data: cached || [], fromCache: true };
-      }
-      throw err;
-    }
-  },
-    } catch (err) {
-      if (!window.navigator.onLine) {
-        const cached = await getCachedData('lands');
         return { data: cached || [], fromCache: true };
       }
       throw err;
