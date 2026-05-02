@@ -7,6 +7,13 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// SOLUTION #1: Separate axios instance for auth (avoids interceptor recursion)
+// This prevents infinite loops when refreshing tokens
+const authAxios = axios.create({
+  baseURL: API_BASE,
+  headers: { 'Content-Type': 'application/json' },
+});
+
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
@@ -16,7 +23,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auto-refresh on 401
+// Auto-refresh on 401 with improved error handling (SOLUTION #4)
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -26,14 +33,24 @@ api.interceptors.response.use(
       const refresh = localStorage.getItem('refresh_token');
       if (refresh) {
         try {
-          const { data } = await axios.post(`${API_BASE}/auth/token/refresh/`, { refresh });
+          // SOLUTION #1: Use separate authAxios instance
+          const { data } = await authAxios.post('/auth/token/refresh/', { refresh });
           localStorage.setItem('access_token', data.access);
           original.headers.Authorization = `Bearer ${data.access}`;
           return api(original);
-        } catch {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          window.location.href = '/login';
+        } catch (refreshError) {
+          // SOLUTION #4: Better error handling
+          // Only redirect if it's an auth error (401/400), not network/server errors
+          if (refreshError.response?.status === 401 || refreshError.response?.status === 400) {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            window.location.href = '/login';
+          } else {
+            // Network or server error - reject the original request
+            // User can retry instead of being forced to login
+            console.error('Token refresh failed (non-auth error):', refreshError.message);
+            return Promise.reject(refreshError);
+          }
         }
       }
     }
@@ -86,16 +103,34 @@ export const farmingAPI = {
   updateLand: (id, data) => api.put(`/farming/lands/${id}/`, data),
   deleteLand: (id) => api.delete(`/farming/lands/${id}/`),
   getLandHistory: (id) => api.get(`/farming/lands/${id}/history/`),
+  // SOLUTION #5: Added response validation
+  // SOLUTION #5: Added response validation
   getTracks: async () => {
     try {
       const res = await api.get('/farming/tracks/');
-      const data = res.data.results || res.data;
-      cacheData('tracks', data);
+      const data = res.data?.results || res.data;
+      
+      // Validate response before caching
+      if (data && Array.isArray(data)) {
+        cacheData('tracks', data);
+      } else if (data && typeof data === 'object') {
+        cacheData('tracks', data);
+      } else {
+        console.warn('Invalid tracks response structure:', res.data);
+      }
       return res;
     } catch (err) {
       if (!window.navigator.onLine) {
         const cached = await getCachedData('tracks');
-        return { data: cached, fromCache: true };
+        return { data: cached || [], fromCache: true };
+      }
+      throw err;
+    }
+  },
+    } catch (err) {
+      if (!window.navigator.onLine) {
+        const cached = await getCachedData('lands');
+        return { data: cached || [], fromCache: true };
       }
       throw err;
     }

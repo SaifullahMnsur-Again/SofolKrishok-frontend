@@ -40,9 +40,11 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // SOLUTION #2: Dynamic cache pattern for /api/* routes (works on any domain/protocol)
         runtimeCaching: [
           {
-            urlPattern: /^http:\/\/localhost:8000\/api\/.*/i,
+            // Matches /api/* on any protocol (http/https) and any domain
+            urlPattern: /\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
