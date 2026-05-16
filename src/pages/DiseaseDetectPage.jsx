@@ -122,7 +122,7 @@ function CropCarousel({ items, selected, onSelect, displayLang }) {
             ? item.crop_name_english
             : displayLang === 'bn'
               ? (item.crop_name_bengali || item.crop_name_english)
-              : (item.crop_name_bengali || item.crop_name_english);
+              : (item.crop_name_english);
 
           return (
             <button
@@ -270,10 +270,10 @@ export default function DiseaseDetectPage() {
       setPreferredLang(lang);
     }
     // If cleared by the user (backspace to empty), reset preference too
-    if (!val.trim()) {
-      preferredLangRef.current = null;
-      setPreferredLang(null);
-    }
+    // if (!val.trim()) {
+    //   preferredLangRef.current = null;
+    //   setPreferredLang(null);
+    // }
   };
 
   /* Filter crops based on query language */
