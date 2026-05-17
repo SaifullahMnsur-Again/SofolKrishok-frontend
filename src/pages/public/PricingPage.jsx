@@ -24,9 +24,9 @@ const plans = [
     ],
   },
   {
-    name: 'Farmer Pro',
+    name: 'Uddokta',
     badge: 'Most Popular',
-    price: '৳299',
+    price: '৳599',
     period: '/month',
     color: '#0ea5e9',
     highlight: true,
@@ -44,9 +44,9 @@ const plans = [
     ],
   },
   {
-    name: 'Enterprise',
+    name: 'Jomidar',
     badge: 'Full Platform',
-    price: '৳799',
+    price: '৳1299',
     period: '/month',
     color: '#8b5cf6',
     highlight: false,
