@@ -1,5 +1,6 @@
 # --- Stage 1: Build ---
-FROM node:20-alpine AS builder
+# Upgrade the build phase to an officially supported Node 20 or 22 image
+FROM node:20-alpine as build-stage
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
