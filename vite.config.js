@@ -40,10 +40,13 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        // SOLUTION #2: Dynamic cache pattern for /api/* routes (works on any domain/protocol)
+        
+        // 1. Force the Service Worker to completely ignore raw URL bar entries targeting /api/
+        navigateFallbackDenylist: [/^\/api/],
+
+        // 2. Keep your existing runtime handlers intact for in-app data fetching
         runtimeCaching: [
           {
-            // Matches /api/* on any protocol (http/https) and any domain
             urlPattern: /\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
