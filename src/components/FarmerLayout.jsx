@@ -68,14 +68,14 @@ export default function FarmerLayout() {
           <div className="farmer-topbar-brand">SofolKrishok</div>
           <div className="farmer-topbar-actions">
             <NotificationCenter />
-            <button 
-              className="topbar-btn cart-btn" 
-              onClick={() => setCartOpen(true)} 
-              style={{ 
-                position: 'relative', 
-                background: 'var(--primary-100)', 
-                border: '1px solid var(--primary-300)', 
-                cursor: 'pointer', 
+            <button
+              className="topbar-btn cart-btn"
+              onClick={() => setCartOpen(true)}
+              style={{
+                position: 'relative',
+                background: 'var(--primary-100)',
+                border: '1px solid var(--primary-300)',
+                cursor: 'pointer',
                 marginRight: '12px',
                 width: '42px',
                 height: '42px',
@@ -102,8 +102,8 @@ export default function FarmerLayout() {
                 </span>
               )}
             </button>
-            <button 
-              className="btn btn-secondary btn-sm" 
+            <button
+              className="btn btn-secondary btn-sm"
               onClick={toggleLang}
               style={{ fontWeight: 800, minWidth: '50px' }}
             >
@@ -119,7 +119,7 @@ export default function FarmerLayout() {
         <div className="farmer-content-wrap">
           <Outlet />
         </div>
-        
+
 
         {/* Mobile Bottom Navigation */}
         <nav className="mobile-bottom-nav">
