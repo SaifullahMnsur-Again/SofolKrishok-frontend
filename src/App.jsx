@@ -14,8 +14,7 @@ import SoilClassifyPage from './pages/SoilClassifyPage';
 import LandsPage from './pages/LandsPage';
 import FarmingWeatherPage from './pages/FarmingWeatherPage';
 import MarketplacePage from './pages/MarketplacePage';
-import MarketplaceProductDetailsPage from './pages/MarketplaceProductDetailsPage';
-import MarketplaceConfirmPage from './pages/MarketplaceConfirmPage';
+import CheckoutPage from './pages/CheckoutPage';
 import FarmerOrdersPage from './pages/FarmerOrdersPage';
 import FarmerConsultationPage from './pages/FarmerConsultationPage';
 import FarmerTracksPage from './pages/FarmerTracksPage';
@@ -37,6 +36,7 @@ import StaffUserManagementPage from './pages/StaffUserManagementPage';
 import StaffAuditLogsPage from './pages/StaffAuditLogsPage';
 import ConsultationRoomPage from './pages/ConsultationRoomPage';
 import { LanguageProvider } from './context/LanguageContext';
+import { CartProvider } from './context/CartContext';
 /* Public pages */
 import LandingPage from './pages/public/LandingPage';
 import FeaturesPage from './pages/public/FeaturesPage';
@@ -49,7 +49,8 @@ function App() {
     <LanguageProvider>
       <ThemeProvider>
         <AuthProvider>
-        <BrowserRouter>
+          <CartProvider>
+          <BrowserRouter>
           <Routes>
             {/* Public routes - anyone can view */}
             <Route path="/" element={<LandingPage />} />
@@ -72,8 +73,7 @@ function App() {
               <Route path="/land/:id" element={<LandDetailPage />} />
               <Route path="/weather" element={<FarmingWeatherPage />} />
               <Route path="/marketplace" element={<MarketplacePage />} />
-              <Route path="/marketplace/product/:productId" element={<MarketplaceProductDetailsPage />} />
-              <Route path="/marketplace/confirm/:productId" element={<MarketplaceConfirmPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/orders" element={<FarmerOrdersPage />} />
               <Route path="/consultation" element={<FarmerConsultationPage />} />
               <Route path="/consultation/room/:id" element={<ConsultationRoomPage />} />
@@ -103,9 +103,10 @@ function App() {
             {/* Catch-all: redirect unknown paths to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </ThemeProvider>
+          </BrowserRouter>
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
   </LanguageProvider>
   );
 }

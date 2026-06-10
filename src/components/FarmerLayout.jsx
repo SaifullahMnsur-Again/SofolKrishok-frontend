@@ -1,18 +1,31 @@
 import { useState } from 'react';
-import { Outlet, Navigate, useNavigate, Link } from 'react-router-dom';
+import { Outlet, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import CartDrawer from './CartDrawer';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import FarmerSidebar from './FarmerSidebar';
 import NotificationCenter from './NotificationCenter';
 
+const BOTTOM_NAV_ITEMS = [
+  { to: '/dashboard', icon: '📊', label: 'Home' },
+  { to: '/chat', icon: '🤖', label: 'AI Chat' },
+  { to: '/lands', icon: '🌾', label: 'Lands' },
+  { to: '/marketplace', icon: '🛒', label: 'Market' },
+];
+
 export default function FarmerLayout() {
   const { user, loading, logout } = useAuth();
+  const { cartCount } = useCart();
+  const [cartOpen, setCartOpen] = useState(false);
   const { lang, toggleLang } = useLanguage();
   const { toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isListening, setIsListening] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (loading) {
     return (
@@ -92,14 +105,61 @@ export default function FarmerLayout() {
     }
   };
 
+  const isActiveRoute = (path) => location.pathname === path;
+
   return (
     <div className="app-layout farmer-portal-layout">
-      <FarmerSidebar />
+      <FarmerSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       <main className="app-main farmer-main" style={{ position: 'relative' }}>
         <header className="farmer-topbar">
+          {/* Mobile hamburger */}
+          <button
+            className="mobile-hamburger"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
           <div className="farmer-topbar-brand">SofolKrishok</div>
           <div className="farmer-topbar-actions">
             <NotificationCenter />
+            <button 
+              className="topbar-btn cart-btn" 
+              onClick={() => setCartOpen(true)} 
+              style={{ 
+                position: 'relative', 
+                background: 'var(--primary-100)', 
+                border: '1px solid var(--primary-300)', 
+                cursor: 'pointer', 
+                marginRight: '12px',
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              <span className="material-icons" style={{ fontStyle: 'normal', fontSize: '1.4rem', color: 'var(--primary-600)' }}>🛒</span>
+              {cartCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: -4, right: -4,
+                  background: '#ef4444', color: 'white', fontSize: '0.75rem',
+                  fontWeight: 800, padding: '2px 6px', borderRadius: '12px',
+                  minWidth: '20px', textAlign: 'center',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                  {cartCount}
+                </span>
+              )}
+            </button>
             <button 
               className="btn btn-secondary btn-sm" 
               onClick={toggleLang}
@@ -127,19 +187,19 @@ export default function FarmerLayout() {
             position: 'fixed',
             bottom: '2rem',
             right: '2rem',
-            width: '60px',
-            height: '60px',
+            width: '56px',
+            height: '56px',
             borderRadius: '50%',
             background: isListening ? '#ef4444' : 'var(--primary-color)',
             color: 'white',
             border: 'none',
             boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            fontSize: '1.5rem',
+            fontSize: '1.3rem',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
+            zIndex: 150,
             transition: 'all 0.3s ease',
             animation: isListening ? 'pulse 1.5s infinite' : 'none'
           }}
@@ -157,13 +217,37 @@ export default function FarmerLayout() {
             borderRadius: '12px',
             color: 'var(--text-primary)',
             backdropFilter: 'blur(12px)',
-            zIndex: 1000,
+            zIndex: 150,
             maxWidth: '280px',
             fontSize: '0.82rem',
           }}>
             {voiceStatus}
           </div>
         )}
+
+        {/* Mobile Bottom Navigation */}
+        <nav className="mobile-bottom-nav">
+          <div className="mobile-bottom-nav-items">
+            {BOTTOM_NAV_ITEMS.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`mobile-bottom-nav-item ${isActiveRoute(item.to) ? 'active' : ''}`}
+              >
+                <span className="nav-icon">{item.icon}</span>
+                {item.label}
+              </Link>
+            ))}
+            <button
+              className={`mobile-bottom-nav-item ${sidebarOpen ? 'active' : ''}`}
+              onClick={() => setSidebarOpen(true)}
+            >
+              <span className="nav-icon">☰</span>
+              Menu
+            </button>
+          </div>
+        </nav>
+        <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
       </main>
     </div>
   );
