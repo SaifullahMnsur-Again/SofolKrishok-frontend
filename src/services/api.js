@@ -141,6 +141,8 @@ export const farmingAPI = {
   createCycle: (data) => api.post('/farming/cycles/', data),
   updateCycle: (id, data) => api.put(`/farming/cycles/${id}/`, data),
   deleteCycle: (id) => api.delete(`/farming/cycles/${id}/`),
+  getCrops: () => api.get('/farming/crops/'),
+  suggestCrop: (data) => api.post('/farming/crops/', data),
   getWeather: (params) => api.get('/farming/weather/', { params }),
 };
 
@@ -167,6 +169,7 @@ export const diseaseAPI = {
   detect: (formData) => api.post('/ai/disease-detect/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
+  submitFeedback: (id, feedback) => api.patch(`/ai/disease-detect-log/${id}/feedback/`, { prediction_feedback: feedback }),
   getSupportedCrops: () => api.get('/ai/disease-detect/'),
   // Farmer-accessible: returns only active disease models (no manager role needed)
   getActiveCrops: () => api.get('/ai/active-disease-crops/'),
@@ -176,10 +179,10 @@ export const diseaseAPI = {
 
 // Crops for model hub dropdown
 export const cropAPI = {
-  getCrops: () => api.get('/ai/crops/'),
-  createCrop: (data) => api.post('/ai/crops/', data),
-  updateCrop: (id, data) => api.patch(`/ai/crops/${id}/`, data),
-  deleteCrop: (id) => api.delete(`/ai/crops/${id}/`),
+  getCrops: () => api.get('/farming/crops/'),
+  createCrop: (data) => api.post('/farming/crops/', data),
+  updateCrop: (id, data) => api.patch(`/farming/crops/${id}/`, data),
+  deleteCrop: (id) => api.delete(`/farming/crops/${id}/`),
 };
 
 // ============ Soil Classification ============
@@ -187,6 +190,7 @@ export const soilAPI = {
   classify: (formData) => api.post('/ai/soil-classify/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
+  submitFeedback: (id, feedback) => api.patch(`/ai/soil-classify-log/${id}/feedback/`, { prediction_feedback: feedback }),
 };
 
 // ============ Marketplace ============

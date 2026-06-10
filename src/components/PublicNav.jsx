@@ -72,8 +72,8 @@ export default function PublicNav() {
             ))}
           </div>
 
-          {/* Auth buttons / User info */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Desktop auth buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }} className="public-nav-auth-desktop">
             {isAuthenticated && user ? (
               <>
                 <Link to={isStaff ? '/staff' : '/dashboard'} style={{
@@ -148,33 +148,35 @@ export default function PublicNav() {
                 </Link>
               </>
             )}
-
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="public-nav-hamburger"
-              style={{
-                display: 'none', background: 'none', border: 'none', cursor: 'pointer',
-                color: '#94a3b8', fontSize: '1.4rem', padding: 4,
-              }}
-            >
-              {menuOpen ? '✕' : '☰'}
-            </button>
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="public-nav-hamburger"
+            style={{
+              display: 'none', background: 'none', border: 'none', cursor: 'pointer',
+              color: '#94a3b8', fontSize: '1.4rem', padding: 8,
+              minWidth: 44, minHeight: 44,
+            }}
+          >
+            {menuOpen ? '✕' : '☰'}
+          </button>
         </div>
       </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — includes both links AND auth buttons */}
       {menuOpen && (
         <div style={{
-          position: 'fixed', top: 64, left: 0, right: 0, zIndex: 199,
+          position: 'fixed', top: 64, left: 0, right: 0, bottom: 0, zIndex: 199,
           background: 'rgba(11,17,32,0.97)', borderBottom: '1px solid rgba(255,255,255,0.08)',
           padding: '16px 24px',
           display: 'flex', flexDirection: 'column', gap: 4,
+          overflowY: 'auto',
         }}>
           {navLinks.map((l) => (
             <Link key={l.to} to={l.to} onClick={() => setMenuOpen(false)} style={{
-              padding: '12px 16px', borderRadius: 10, fontWeight: 500, fontSize: '0.95rem',
+              padding: '14px 16px', borderRadius: 10, fontWeight: 500, fontSize: '1rem',
               textDecoration: 'none',
               color: pathname === l.to ? '#4ade80' : '#94a3b8',
               background: pathname === l.to ? 'rgba(34,197,94,0.1)' : 'transparent',
@@ -182,6 +184,66 @@ export default function PublicNav() {
               {l.label}
             </Link>
           ))}
+
+          {/* Divider */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', margin: '8px 0' }} />
+
+          {/* Auth section in mobile menu */}
+          {isAuthenticated && user ? (
+            <>
+              <Link
+                to={isStaff ? '/staff' : '/dashboard'}
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  padding: '14px 16px', borderRadius: 10, fontWeight: 600, fontSize: '1rem',
+                  textDecoration: 'none', color: '#4ade80',
+                  background: 'rgba(34,197,94,0.08)',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}
+              >
+                <span>👤</span> {user.first_name || user.username || 'Dashboard'}
+              </Link>
+              <button
+                onClick={() => { logout(); setMenuOpen(false); }}
+                style={{
+                  padding: '14px 16px', borderRadius: 10, fontWeight: 600, fontSize: '1rem',
+                  color: '#ef4444', background: 'rgba(239,68,68,0.08)',
+                  border: 'none', cursor: 'pointer', textAlign: 'left',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}
+              >
+                <span>🚪</span> Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  padding: '14px 16px', borderRadius: 10, fontWeight: 600, fontSize: '1rem',
+                  textDecoration: 'none', color: '#94a3b8',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  textAlign: 'center',
+                }}
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  padding: '14px 16px', borderRadius: 10, fontWeight: 700, fontSize: '1rem',
+                  textDecoration: 'none', color: '#fff',
+                  background: 'linear-gradient(135deg,#22c55e,#16a34a)',
+                  textAlign: 'center',
+                  marginTop: 4,
+                }}
+              >
+                🌾 Get Started Free
+              </Link>
+            </>
+          )}
         </div>
       )}
 
@@ -191,7 +253,8 @@ export default function PublicNav() {
       <style>{`
         @media (max-width: 640px) {
           .public-nav-links { display: none !important; }
-          .public-nav-hamburger { display: block !important; }
+          .public-nav-auth-desktop { display: none !important; }
+          .public-nav-hamburger { display: flex !important; align-items: center; justify-content: center; }
         }
         @media (max-width: 480px) {
           .features-row { grid-template-columns: 1fr !important; }

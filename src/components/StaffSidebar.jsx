@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-export default function StaffSidebar() {
+export default function StaffSidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth();
   const { toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -51,61 +51,93 @@ export default function StaffSidebar() {
     items: section.items.filter(item => item.roles.includes(user?.role))
   })).filter(section => section.items.length > 0);
 
+  // Close sidebar on nav link click (mobile)
+  const handleNavClick = () => {
+    if (onClose) onClose();
+  };
+
   return (
-    <aside 
-      className="app-sidebar" 
-      id="staff-sidebar"
-    >
-      <div className="sidebar-brand">
-        <div className="sidebar-brand-icon">🏢</div>
-        <div>
-          <div className="sidebar-brand-text">Staff Portal</div>
-          <div className="sidebar-brand-sub">SofolKrishok</div>
-        </div>
-      </div>
-
-      <nav className="sidebar-nav">
-        {filteredNavItems.map((section) => (
-          <div key={section.section}>
-            <div className="sidebar-section-title">{section.section}</div>
-            {section.items.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/staff'}
-                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-              >
-                <span className="sidebar-link-icon">{item.icon}</span>
-                {item.label}
-              </NavLink>
-            ))}
+    <>
+      {/* Mobile backdrop overlay */}
+      <div
+        className={`sidebar-backdrop ${isOpen ? 'visible' : ''}`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <aside 
+        className={`app-sidebar ${isOpen ? 'open' : ''}`}
+        id="staff-sidebar"
+      >
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px 0 0',
+        }}>
+          <div className="sidebar-brand" style={{ borderBottom: 'none', marginBottom: 0, flex: 1 }}>
+            <div className="sidebar-brand-icon">🏢</div>
+            <div>
+              <div className="sidebar-brand-text">Staff Portal</div>
+              <div className="sidebar-brand-sub">SofolKrishok</div>
+            </div>
           </div>
-        ))}
-      </nav>
-
-      <div style={{ padding: '12px 16px' }}>
-        <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
-      </div>
-
-      <div className="sidebar-user">
-        <div className="sidebar-avatar" style={{ overflow: 'hidden', padding: user?.avatar ? 0 : undefined }}>
-          {user?.avatar
-            ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-            : initials.toUpperCase()
-          }
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="mobile-hamburger"
+              style={{ display: isOpen ? 'flex' : undefined }}
+              aria-label="Close menu"
+            >
+              ✕
+            </button>
+          )}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {user?.first_name || user?.username}
-          </div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
-            {user?.role?.replace('_', ' ')}
-          </div>
+        <div style={{ borderBottom: '1px solid var(--glass-border)', margin: '0 20px 16px' }} />
+
+        <nav className="sidebar-nav">
+          {filteredNavItems.map((section) => (
+            <div key={section.section}>
+              <div className="sidebar-section-title">{section.section}</div>
+              {section.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/staff'}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  onClick={handleNavClick}
+                >
+                  <span className="sidebar-link-icon">{item.icon}</span>
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <div style={{ padding: '12px 16px' }}>
+          <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme" />
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={handleLogout} title="Logout">
-          🚪
-        </button>
-      </div>
-    </aside>
+
+        <div className="sidebar-user">
+          <div className="sidebar-avatar" style={{ overflow: 'hidden', padding: user?.avatar ? 0 : undefined }}>
+            {user?.avatar
+              ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+              : initials.toUpperCase()
+            }
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user?.first_name || user?.username}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+              {user?.role?.replace('_', ' ')}
+            </div>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={handleLogout} title="Logout">
+            🚪
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }

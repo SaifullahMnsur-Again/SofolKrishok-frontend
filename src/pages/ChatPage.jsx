@@ -11,6 +11,7 @@ export default function ChatPage() {
   const [lands, setLands] = useState([]);
   const [selectedLand, setSelectedLand] = useState('');
   const [loadingSessions, setLoadingSessions] = useState(true);
+  const [mobileSessionsOpen, setMobileSessionsOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -61,12 +62,14 @@ export default function ChatPage() {
 
   const handleSelectSession = (session) => {
     loadSession(session.id);
+    setMobileSessionsOpen(false);
   };
 
   const handleNewChat = () => {
     setActiveSession(null);
     setMessages([]);
     setSelectedLand('');
+    setMobileSessionsOpen(false);
     inputRef.current?.focus();
   };
 
@@ -157,12 +160,22 @@ export default function ChatPage() {
   return (
     <div className="chat-layout">
       {/* ===== Sessions Sidebar ===== */}
-      <div className="chat-sessions">
+      <div className={`chat-sessions ${mobileSessionsOpen ? 'mobile-drawer-open' : ''}`}>
         <div className="chat-sessions-header">
           <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>💬 Chats</span>
-          <button className="btn btn-primary btn-sm" onClick={handleNewChat}>
-            + New
-          </button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button className="btn btn-primary btn-sm" onClick={handleNewChat}>
+              + New
+            </button>
+            {/* Mobile close button */}
+            <button
+              className="chat-mobile-sessions-toggle btn btn-ghost btn-sm"
+              onClick={() => setMobileSessionsOpen(false)}
+              style={{ fontSize: '1.1rem', padding: '6px 10px' }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         <div className="chat-sessions-list">
@@ -186,7 +199,7 @@ export default function ChatPage() {
                   <button
                     className="btn btn-ghost"
                     onClick={(e) => handleDeleteSession(e, session.id)}
-                    style={{ padding: 2, fontSize: '0.75rem', minWidth: 'unset' }}
+                    style={{ padding: 2, fontSize: '0.75rem', minWidth: 'unset', minHeight: 'unset' }}
                     title="Delete"
                   >
                     ✕
@@ -205,18 +218,30 @@ export default function ChatPage() {
       <div className="chat-main">
         {/* Header */}
         <div style={{
-          padding: '12px 24px',
+          padding: '10px 16px',
           borderBottom: '1px solid var(--glass-border)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           background: 'var(--glass-bg)', backdropFilter: 'blur(16px)',
+          gap: 8,
+          flexWrap: 'wrap',
         }}>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: '1rem' }}>
-              {activeSession?.title || '🤖 SofolKrishok AI Assistant'}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              {activeSession ? `Session #${activeSession.id}` : 'Start a new conversation'}
-              {activeSession && ` • ${messages.length} messages in memory`}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+            {/* Mobile sessions toggle */}
+            <button
+              className="chat-mobile-sessions-toggle btn btn-secondary btn-sm"
+              onClick={() => setMobileSessionsOpen(true)}
+              style={{ flexShrink: 0, padding: '8px 12px' }}
+            >
+              💬 Chats
+            </button>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {activeSession?.title || '🤖 AI Assistant'}
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                {activeSession ? `Session #${activeSession.id}` : 'Start a conversation'}
+                {activeSession && ` • ${messages.length} msgs`}
+              </div>
             </div>
           </div>
 
@@ -226,7 +251,7 @@ export default function ChatPage() {
               className="input-field"
               value={selectedLand}
               onChange={(e) => setSelectedLand(e.target.value)}
-              style={{ maxWidth: 240, fontSize: '0.8rem', padding: '6px 10px' }}
+              style={{ maxWidth: 200, fontSize: '0.8rem', padding: '6px 10px', minHeight: 36 }}
             >
               <option value="">🌾 No land context</option>
               {lands.map((l) => (
@@ -245,20 +270,21 @@ export default function ChatPage() {
               flex: 1, display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center',
               color: 'var(--text-muted)', textAlign: 'center', gap: 16,
+              padding: '0 12px',
             }}>
-              <span style={{ fontSize: '4rem' }}>🌿</span>
+              <span style={{ fontSize: '3.5rem' }}>🌿</span>
               <div>
-                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
                   SofolKrishok AI Assistant
                 </div>
-                <div style={{ fontSize: '0.9rem', maxWidth: 400 }}>
+                <div style={{ fontSize: '0.85rem', maxWidth: 360 }}>
                   Ask me anything about farming — crop diseases, soil management,
-                  weather planning, or market advice. I remember our entire conversation!
+                  weather planning, or market advice.
                 </div>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 12 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 8 }}>
                 {[
-                  'আমার ধানের পাতা হলুদ হচ্ছে, কী করব?',
+                  'আমার ধানের পাতা হলুদ হচ্ছে',
                   'Best fertilizer for wheat?',
                   'How to prevent corn leaf blight?',
                   'আলুর দাম বাড়বে কি?',
@@ -267,7 +293,7 @@ export default function ChatPage() {
                     key={i}
                     className="btn btn-secondary btn-sm"
                     onClick={() => { setInput(q); inputRef.current?.focus(); }}
-                    style={{ fontSize: '0.8rem' }}
+                    style={{ fontSize: '0.78rem' }}
                   >
                     {q}
                   </button>
@@ -316,7 +342,7 @@ export default function ChatPage() {
             <textarea
               ref={inputRef}
               className="chat-input-field"
-              placeholder="Ask me anything about farming... (Shift+Enter for new line)"
+              placeholder="Ask me anything about farming..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}

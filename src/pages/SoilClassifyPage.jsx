@@ -1,21 +1,42 @@
 import { useState, useRef, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { soilAPI, farmingAPI } from '../services/api';
 
 export default function SoilClassifyPage() {
+  const navigate = useNavigate();
+  
+  const aiContextStr = localStorage.getItem('aiContext');
+  const aiContext = aiContextStr ? JSON.parse(aiContextStr) : null;
+  const initialLandId = aiContext?.landId || '';
+
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [lands, setLands] = useState([]);
-  const [selectedLand, setSelectedLand] = useState('');
+  const [selectedLand, setSelectedLand] = useState(initialLandId);
+  const [imageTakenAt, setImageTakenAt] = useState(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  });
+  const [feedback, setFeedback] = useState(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (initialLandId) {
+      setSelectedLand(initialLandId);
+    }
+  }, [initialLandId]);
 
   useEffect(() => {
     farmingAPI.getLands().then(({ data }) => {
       setLands(data.results || data);
+      if (initialLandId) setSelectedLand(initialLandId);
     }).catch(() => {});
-  }, []);
+  }, [initialLandId]);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -24,6 +45,7 @@ export default function SoilClassifyPage() {
       setImagePreview(URL.createObjectURL(file));
       setResult(null);
       setError('');
+      setFeedback(null);
     }
   };
 
@@ -32,17 +54,40 @@ export default function SoilClassifyPage() {
     setLoading(true);
     setError('');
     setResult(null);
+    setFeedback(null);
 
     try {
       const formData = new FormData();
       formData.append('image', imageFile);
       if (selectedLand) formData.append('land_id', selectedLand);
+      if (imageTakenAt) {
+        formData.append('image_taken_at', new Date(imageTakenAt).toISOString());
+      }
       const { data } = await soilAPI.classify(formData);
       setResult(data);
     } catch (err) {
       setError(err.response?.data?.error || 'Classification failed.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFeedback = async (value) => {
+    if (!result?.log_id) return;
+    setFeedbackLoading(true);
+    try {
+      await soilAPI.submitFeedback(result.log_id, value);
+      setFeedback(value);
+      if (aiContext?.returnUrl) {
+        setTimeout(() => {
+          localStorage.removeItem('aiContext');
+          navigate(aiContext.returnUrl);
+        }, 1500);
+      }
+    } catch (err) {
+      console.error('Feedback failed', err);
+    } finally {
+      setFeedbackLoading(false);
     }
   };
 
@@ -57,13 +102,14 @@ export default function SoilClassifyPage() {
             <div className="input-group" style={{ marginBottom: 20 }}>
               <label className="input-label">Link to Land Parcel (optional)</label>
               <select
+                key={`select-${selectedLand}-${lands.length}`}
                 className="input-field"
                 value={selectedLand}
                 onChange={(e) => setSelectedLand(e.target.value)}
               >
                 <option value="">Select a land parcel...</option>
                 {lands.map((l) => (
-                  <option key={l.id} value={l.id}>{l.name}</option>
+                  <option key={l.id} value={String(l.id)}>{l.name}</option>
                 ))}
               </select>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -71,6 +117,16 @@ export default function SoilClassifyPage() {
               </span>
             </div>
           )}
+
+          <div className="input-group" style={{ marginBottom: 20 }}>
+            <label className="input-label">Image Taken At</label>
+            <input
+              type="datetime-local"
+              className="input-field"
+              value={imageTakenAt}
+              onChange={(e) => setImageTakenAt(e.target.value)}
+            />
+          </div>
 
           <div
             className="upload-zone"
@@ -159,6 +215,42 @@ export default function SoilClassifyPage() {
                   </div>
                 </div>
               ))}
+
+              {/* Feedback Section */}
+              <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: 12 }}>
+                  Did the model classify the soil correctly?
+                </div>
+                {feedback ? (
+                  <div style={{ padding: '12px', background: 'rgba(59,130,246,0.1)', borderRadius: 'var(--radius-md)', color: 'var(--blue-600)', fontWeight: 600, textAlign: 'center' }}>
+                    Thank you for your feedback!
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => handleFeedback('correct')} disabled={feedbackLoading}>
+                      👍 Yes
+                    </button>
+                    <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => handleFeedback('incorrect')} disabled={feedbackLoading}>
+                      👎 No
+                    </button>
+                    <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => handleFeedback('not_sure')} disabled={feedbackLoading}>
+                      🤷 Not Sure
+                    </button>
+                  </div>
+                )}
+                {aiContext?.returnUrl && (
+                  <button
+                    className="btn btn-secondary"
+                    style={{ width: '100%', marginTop: 12 }}
+                    onClick={() => {
+                      localStorage.removeItem('aiContext');
+                      navigate(aiContext.returnUrl);
+                    }}
+                  >
+                    Return to Land
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>

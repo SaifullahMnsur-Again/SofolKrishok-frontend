@@ -2,11 +2,12 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { aiModelAPI, cropAPI } from '../services/api';
+import CropSelector from '../components/CropSelector';
 
 const ALLOWED_ROLES = new Set(['general_manager', 'service_team_lead']);
 
 const initialForm = {
-  crop_type: '',
+  crop: null,
   display_name: '',
   model_name: '',
   version: 'v1',
@@ -727,9 +728,9 @@ export default function StaffModelHubPage() {
   const [crops, setCrops] = useState([]);
   const [cropQuery, setCropQuery] = useState('');
   const [showAddCrop, setShowAddCrop] = useState(false);
-  const [newCrop, setNewCrop] = useState({ english_name: '', bengali_name: '' });
+  const [newCrop, setNewCrop] = useState({ name_en: '', name_bn: '' });
   const [editingCropId, setEditingCropId] = useState(null);
-  const [cropEditForm, setCropEditForm] = useState({ english_name: '', bengali_name: '' });
+  const [cropEditForm, setCropEditForm] = useState({ name_en: '', name_bn: '' });
   const [showMarkButtons, setShowMarkButtons] = useState(false);
   const [soilShowMarkButtons, setSoilShowMarkButtons] = useState(false);
   const [expandedModelId, setExpandedModelId] = useState(null);
@@ -741,9 +742,9 @@ export default function StaffModelHubPage() {
   const filteredCrops = cropList.filter((crop) => {
     const needle = cropQuery.trim().toLowerCase();
     if (!needle) return true;
-    return String(crop.english_name || '').toLowerCase().includes(needle) || String(crop.bengali_name || '').toLowerCase().includes(needle);
+    return String(crop.name_en || '').toLowerCase().includes(needle) || String(crop.name_bn || '').toLowerCase().includes(needle);
   });
-  const selectedCrop = cropList.find((crop) => crop.english_name === form.crop_type) || null;
+  const selectedCrop = cropList.find((crop) => crop.id === form.crop) || null;
   const selectedCount = selectedIds.length;
   const soilSelectedCount = soilSelectedIds.length;
 
@@ -780,20 +781,20 @@ export default function StaffModelHubPage() {
   const handleCropEdit = (crop) => {
     setEditingCropId(crop.id);
     setCropEditForm({
-      english_name: crop.english_name || '',
-      bengali_name: crop.bengali_name || '',
+      name_en: crop.name_en || '',
+      name_bn: crop.name_bn || '',
     });
   };
 
   const cancelCropEdit = () => {
     setEditingCropId(null);
-    setCropEditForm({ english_name: '', bengali_name: '' });
+    setCropEditForm({ name_en: '', name_bn: '' });
   };
 
   const handleCropSave = async () => {
     if (!editingCropId) return;
-    const english_name = cropEditForm.english_name.trim();
-    if (!english_name) {
+    const name_en = cropEditForm.name_en.trim();
+    if (!name_en) {
       setError('Crop English name is required.');
       return;
     }
@@ -802,8 +803,8 @@ export default function StaffModelHubPage() {
     setMessage('');
     try {
       await cropAPI.updateCrop(editingCropId, {
-        english_name,
-        bengali_name: cropEditForm.bengali_name.trim(),
+        name_en,
+        name_bn: cropEditForm.name_bn.trim(),
       });
       setMessage('Crop updated.');
       cancelCropEdit();
@@ -817,15 +818,15 @@ export default function StaffModelHubPage() {
   };
 
   const handleCropDelete = async (crop) => {
-    if (!window.confirm(`Delete crop ${crop.english_name}? This will mark linked models offline.`)) return;
+    if (!window.confirm(`Delete crop ${crop.name_en}? This will mark linked models offline.`)) return;
     setSaving(true);
     setError('');
     setMessage('');
     try {
       await cropAPI.deleteCrop(crop.id);
       setMessage('Crop deleted and linked models marked offline.');
-      if (form.crop_type === crop.english_name) {
-        setForm((current) => ({ ...current, crop_type: '' }));
+      if (form.crop === crop.id) {
+        setForm((current) => ({ ...current, crop: null }));
       }
       if (editingCropId === crop.id) {
         cancelCropEdit();
@@ -888,7 +889,7 @@ export default function StaffModelHubPage() {
     setExpandedModelId(model.id);
     setHubMode('edit');
     setForm({
-      crop_type: model.crop_type || '',
+      crop: model.crop || null,
       model_name: model.model_name || model.display_name || '',
       version: model.version || 'v1',
       display_name: model.display_name || '',
@@ -911,7 +912,7 @@ export default function StaffModelHubPage() {
     setMessage('');
 
     try {
-      if (operation === 'disease_detection' && !form.crop_type.trim()) {
+      if (operation === 'disease_detection' && !form.crop) {
         throw new Error('Please choose an existing crop from the crop section first.');
       }
       if (!form.display_name.trim()) {
@@ -930,11 +931,18 @@ export default function StaffModelHubPage() {
         throw new Error('Please choose an indices file.');
       }
 
+      let cropTypeVal = null;
+      if (activeTab === 'disease-detection') {
+        cropTypeVal = form.crop;
+        if (!cropTypeVal) {
+          setError('Please select or suggest a crop for this model.');
+          return;
+        }
+      }
+
       const payload = new FormData();
       payload.append('operation', operation);
-      if (operation === 'disease_detection') {
-        payload.append('crop_type', form.crop_type.trim());
-      }
+      if (cropTypeVal) payload.append('crop', cropTypeVal);
       payload.append('display_name', form.display_name.trim());
       payload.append('model_name', form.display_name.trim());
       if (form.version) payload.append('version', form.version.trim());
@@ -1170,15 +1178,40 @@ export default function StaffModelHubPage() {
 
             {showAddCrop ? (
               <div style={{ marginTop: '0.9rem', padding: '0.9rem', borderRadius: 14, background: 'rgba(248,250,252,0.96)', border: '1px solid rgba(148,163,184,0.22)' }}>
+                {activeTab === 'disease-detection' && (
+                  <div className="input-group">
+                    <label className="input-label">Review Farmer Suggestions (Optional)</label>
+                    <select
+                      className="input-field"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          setNewCrop({ id: null, name_en: '', name_bn: '' });
+                          return;
+                        }
+                        const c = crops.find((x) => String(x.id) === val);
+                        if (c) {
+                          setNewCrop({ id: c.id, name_en: c.name_en, name_bn: c.name_bn });
+                        }
+                      }}
+                      value={newCrop.id || ''}
+                    >
+                      <option value="">-- Select a suggestion to approve --</option>
+                      {crops.filter((c) => !c.is_approved).map((c) => (
+                        <option key={c.id} value={c.id}>{c.name_en} {c.name_bn ? `(${c.name_bn})` : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 10 }}>
                   <div className="input-group">
                     <label className="input-label" htmlFor="crop-english-new">Crop name (english)</label>
                     <input
                       id="crop-english-new"
                       className="input-field"
-                      value={newCrop.english_name}
-                      onChange={(e) => setNewCrop((s) => ({ ...s, english_name: e.target.value }))}
-                      placeholder="e.g. wheat"
+                      value={newCrop.name_en}
+                      onChange={(e) => setNewCrop((s) => ({ ...s, name_en: e.target.value }))}
+                      placeholder="e.g. Wheat"
                     />
                   </div>
                   <div className="input-group">
@@ -1186,8 +1219,8 @@ export default function StaffModelHubPage() {
                     <input
                       id="crop-bangla-new"
                       className="input-field"
-                      value={newCrop.bengali_name}
-                      onChange={(e) => setNewCrop((s) => ({ ...s, bengali_name: e.target.value }))}
+                      value={newCrop.name_bn}
+                      onChange={(e) => setNewCrop((s) => ({ ...s, name_bn: e.target.value }))}
                       placeholder="e.g. গম"
                     />
                   </div>
@@ -1197,19 +1230,27 @@ export default function StaffModelHubPage() {
                     type="button"
                     className="btn btn-sm btn-primary"
                     onClick={async () => {
-                      const english_name = newCrop.english_name.trim();
-                      const bengali_name = newCrop.bengali_name.trim();
-                      if (!english_name) return;
+                      const name_en = newCrop.name_en.trim();
+                      const name_bn = newCrop.name_bn.trim();
+                      if (!name_en) return;
                       try {
-                        const res = await cropAPI.createCrop({ english_name, bengali_name });
-                        const created = res.data;
-                        setCrops((cur) => [...cur, created].sort((a, b) => String(a.english_name).localeCompare(String(b.english_name))));
-                        setForm((cur) => ({ ...cur, crop_type: created.english_name }));
-                        setNewCrop({ english_name: '', bengali_name: '' });
+                        let savedCrop;
+                        if (newCrop.id) {
+                          const res = await cropAPI.updateCrop(newCrop.id, { name_en, name_bn });
+                          savedCrop = res.data;
+                          setCrops((cur) => cur.map((c) => c.id === savedCrop.id ? savedCrop : c).sort((a, b) => String(a.name_en).localeCompare(String(b.name_en))));
+                          setMessage('Crop approved and updated.');
+                        } else {
+                          const res = await cropAPI.createCrop({ name_en, name_bn });
+                          savedCrop = res.data;
+                          setCrops((cur) => [...cur, savedCrop].sort((a, b) => String(a.name_en).localeCompare(String(b.name_en))));
+                          setMessage('Crop added.');
+                        }
+                        setForm((cur) => ({ ...cur, crop: savedCrop.id }));
+                        setNewCrop({ id: null, name_en: '', name_bn: '' });
                         setShowAddCrop(false);
-                        setMessage('Crop added and selected.');
                       } catch (err) {
-                        setError(err.response?.data?.detail || err.response?.data?.error || 'Failed to add crop.');
+                        setError(err.response?.data?.detail || err.response?.data?.error || 'Failed to save crop.');
                       }
                     }}
                   >
@@ -1227,8 +1268,8 @@ export default function StaffModelHubPage() {
                     <input
                       id="crop-english-edit"
                       className="input-field"
-                      value={cropEditForm.english_name}
-                      onChange={(e) => setCropEditForm((s) => ({ ...s, english_name: e.target.value }))}
+                      value={cropEditForm.name_en}
+                      onChange={(e) => setCropEditForm((s) => ({ ...s, name_en: e.target.value }))}
                     />
                   </div>
                   <div className="input-group">
@@ -1236,8 +1277,8 @@ export default function StaffModelHubPage() {
                     <input
                       id="crop-bangla-edit"
                       className="input-field"
-                      value={cropEditForm.bengali_name}
-                      onChange={(e) => setCropEditForm((s) => ({ ...s, bengali_name: e.target.value }))}
+                      value={cropEditForm.name_bn}
+                      onChange={(e) => setCropEditForm((s) => ({ ...s, name_bn: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -1253,17 +1294,17 @@ export default function StaffModelHubPage() {
                 <div style={{ color: '#64748b' }}>No crops found.</div>
               ) : (
                 filteredCrops.map((crop) => {
-                  const isSelected = form.crop_type === crop.english_name;
+                  const isSelected = form.crop === crop.id;
                   return (
                     <div
                       key={crop.id}
                       role="button"
                       tabIndex={0}
-                      onClick={() => setForm((cur) => ({ ...cur, crop_type: crop.english_name }))}
+                      onClick={() => setForm((cur) => ({ ...cur, crop: crop.id }))}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault();
-                          setForm((cur) => ({ ...cur, crop_type: crop.english_name }));
+                          setForm((cur) => ({ ...cur, crop: crop.id }));
                         }
                       }}
                       style={{
@@ -1277,8 +1318,8 @@ export default function StaffModelHubPage() {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
                         <div>
-                          <div style={{ fontWeight: 700, color: '#0f172a' }}>{crop.english_name}</div>
-                          <div style={{ color: '#64748b', marginTop: 4 }}>{crop.bengali_name || '—'}</div>
+                          <div style={{ fontWeight: 700, color: '#0f172a' }}>{crop.name_en}</div>
+                          <div style={{ color: '#64748b', marginTop: 4 }}>{crop.name_bn || '—'}</div>
                         </div>
                         <span style={{ fontSize: '0.74rem', padding: '3px 8px', borderRadius: 999, background: isSelected ? 'rgba(59,130,246,0.15)' : 'rgba(148,163,184,0.15)', color: isSelected ? '#1d4ed8' : '#475569' }}>
                           {isSelected ? 'Selected' : 'Choose'}
@@ -1467,8 +1508,8 @@ export default function StaffModelHubPage() {
                     <div className="input-field" style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(248,250,252,0.95)' }}>
                       {selectedCrop ? (
                         <>
-                          <strong>{selectedCrop.english_name}</strong>
-                          <span style={{ color: '#64748b' }}>{selectedCrop.bengali_name || '—'}</span>
+                          <strong>{selectedCrop.name_en}</strong>
+                          <span style={{ color: '#64748b' }}>{selectedCrop.name_bn || '—'}</span>
                         </>
                       ) : (
                         <span style={{ color: '#94a3b8' }}>Choose a crop above to continue</span>
@@ -1575,7 +1616,7 @@ export default function StaffModelHubPage() {
                       setEditingModel(null);
                       setExpandedSoilModelId(null);
                       setHubMode('add');
-                      setForm({ ...initialForm, crop_type: '', model_name: '', display_name: '', version: 'v1' });
+                      setForm({ ...initialForm, crop: null, model_name: '', display_name: '', version: 'v1' });
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                   >
@@ -1690,7 +1731,7 @@ export default function StaffModelHubPage() {
                                           setEditingModel(model);
                                           setHubMode('edit');
                                           setForm({
-                                            crop_type: '',
+                                            crop: null,
                                             model_name: model.model_name || model.display_name || '',
                                             version: model.version || 'v1',
                                             display_name: model.display_name || '',

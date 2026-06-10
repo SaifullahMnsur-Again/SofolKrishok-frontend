@@ -116,7 +116,7 @@ export default function FarmerTracksPage() {
                   {track.actual_harvest_date ? `to ${track.actual_harvest_date}` : track.expected_harvest_date ? `to expected ${track.expected_harvest_date}` : 'to ongoing'}
                 </div>
                 <div style={{ marginTop: '1.5rem', height: '6px', background: 'rgba(0,0,0,0.05)', borderRadius: '3px', position: 'relative' }}>
-                   <div style={{ width: track.status === 'active' ? '40%' : '5%', height: '100%', background: 'var(--primary-color)', borderRadius: '3px' }}></div>
+                  <div style={{ width: track.status === 'active' ? '40%' : '5%', height: '100%', background: 'var(--primary-color)', borderRadius: '3px' }}></div>
                 </div>
                 <div style={{ marginTop: '0.5rem', textAlign: 'right', fontSize: '0.75rem', opacity: 0.8 }}>
                   Track Details →

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import StaffSidebar from './StaffSidebar';
@@ -5,6 +6,7 @@ import NotificationCenter from './NotificationCenter';
 
 export default function StaffLayout() {
   const { user, loading } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (loading) {
     return (
@@ -24,12 +26,24 @@ export default function StaffLayout() {
 
   return (
     <div className="app-layout staff-portal-layout">
-      <StaffSidebar />
+      <StaffSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       <main className="app-main staff-main">
         <div className="staff-topbar">
-          <h2 className="staff-topbar-title">
-            Staff Resource Portal
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button
+              className="mobile-hamburger"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              ☰
+            </button>
+            <h2 className="staff-topbar-title">
+              Staff Resource Portal
+            </h2>
+          </div>
           <div className="staff-topbar-right">
             <NotificationCenter />
             <div className="staff-role-chip">

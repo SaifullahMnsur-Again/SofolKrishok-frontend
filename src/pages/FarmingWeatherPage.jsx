@@ -80,7 +80,7 @@ export default function FarmingWeatherPage() {
             <div style={{ fontWeight: 700, marginBottom: 12 }}>
               Location: {weather?.location || 'Rajshahi, Bangladesh'}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
+            <div className="weather-forecast-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
               {(weather?.forecast || []).map((day) => (
                 <div key={day.date} className="glass-card" style={{ padding: 12 }}>
                   <div style={{ fontWeight: 700 }}>{formatDate(day.date)}</div>

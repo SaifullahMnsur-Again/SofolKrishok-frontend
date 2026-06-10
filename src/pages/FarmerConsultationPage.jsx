@@ -115,8 +115,8 @@ export default function FarmerConsultationPage() {
 
   return (
     <div>
-      <h2 style={{ color: 'var(--text-color)', marginBottom: '1rem' }}>Expert Consultations</h2>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
+      <h2 className="page-title">🩺 Expert Consultations</h2>
+      <p className="page-subtitle">
         Book a 20-minute live session with an agricultural expert. Slots start at :00, :20, and :40.
       </p>
 
@@ -124,44 +124,76 @@ export default function FarmerConsultationPage() {
         <section className="card glass-card" style={{ padding: '1.5rem' }}>
           <h3 style={{ marginBottom: '1rem' }}>My Booked Tickets</h3>
           {loadingTickets ? <p>Loading tickets...</p> : tickets.length === 0 ? <p>You have no bookings.</p> : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <th style={{ padding: '10px 0' }}>Ticket ID</th>
-                  <th style={{ padding: '10px 0' }}>Expert</th>
-                  <th style={{ padding: '10px 0' }}>Details</th>
-                  <th style={{ padding: '10px 0' }}>Status</th>
-                  <th style={{ padding: '10px 0' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
+            <>
+              {/* Desktop table */}
+              <div className="mobile-table-hide" style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <th style={{ padding: '10px 0' }}>Ticket ID</th>
+                      <th style={{ padding: '10px 0' }}>Expert</th>
+                      <th style={{ padding: '10px 0' }}>Details</th>
+                      <th style={{ padding: '10px 0' }}>Status</th>
+                      <th style={{ padding: '10px 0' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tickets.map(t => (
+                      <tr key={t.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={{ padding: '10px 0' }}>#{t.id}</td>
+                        <td style={{ padding: '10px 0' }}>{t.slot?.expert_name}</td>
+                        <td style={{ padding: '10px 0', fontSize: '0.9rem' }}>
+                          {t.slot?.date} at {t.slot?.start_time}
+                        </td>
+                        <td style={{ padding: '10px 0', textTransform: 'capitalize', color: 'var(--primary-color)' }}>
+                          {t.status.replace('_', ' ')}
+                        </td>
+                        <td style={{ padding: '10px 0' }}>
+                          <button className="btn btn-secondary btn-sm" onClick={() => openRoom(t.id)}>
+                            Open Room
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile card list */}
+              <div className="mobile-card-list">
                 {tickets.map(t => (
-                  <tr key={t.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '10px 0' }}>#{t.id}</td>
-                    <td style={{ padding: '10px 0' }}>{t.slot?.expert_name}</td>
-                    <td style={{ padding: '10px 0', fontSize: '0.9rem' }}>
-                      {t.slot?.date} at {t.slot?.start_time}
-                    </td>
-                    <td style={{ padding: '10px 0', textTransform: 'capitalize', color: 'var(--primary-color)' }}>
-                      {t.status.replace('_', ' ')}
-                    </td>
-                    <td style={{ padding: '10px 0' }}>
+                  <div key={t.id} className="mobile-card-item">
+                    <div className="mobile-card-item-row">
+                      <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Ticket #{t.id}</span>
+                      <span style={{ textTransform: 'capitalize', color: 'var(--primary-color)', fontWeight: 600, fontSize: '0.82rem' }}>
+                        {t.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <div className="mobile-card-item-row">
+                      <span className="mobile-card-item-label">Expert</span>
+                      <span className="mobile-card-item-value">{t.slot?.expert_name}</span>
+                    </div>
+                    <div className="mobile-card-item-row">
+                      <span className="mobile-card-item-label">When</span>
+                      <span className="mobile-card-item-value">{t.slot?.date} at {t.slot?.start_time}</span>
+                    </div>
+                    <div className="mobile-card-item-actions">
                       <button className="btn btn-secondary btn-sm" onClick={() => openRoom(t.id)}>
                         Open Room
                       </button>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </>
           )}
         </section>
 
         <section className="card glass-card" style={{ padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', alignItems: 'end', marginBottom: '1rem' }}>
+          <div className="consultation-search-row" style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', alignItems: 'end', marginBottom: '1rem' }}>
             <div>
               <h3 style={{ marginBottom: '0.35rem' }}>Take New Ticket</h3>
-              <p style={{ margin: 0, color: 'var(--text-muted)' }}>Select date and shift to see available experts, then choose one expert to view bookable slots.</p>
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.88rem' }}>Select date and shift to see available experts, then choose one expert to view bookable slots.</p>
             </div>
             <div style={{ minWidth: 220, flex: '1 1 220px' }}>
               <label style={{ display: 'block', marginBottom: '0.35rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Choose date</label>
@@ -200,7 +232,7 @@ export default function FarmerConsultationPage() {
           ) : expertCards.length === 0 ? (
             <p>No experts found for this date and shift.</p>
           ) : (
-            <div style={{ display: 'grid', gap: '0.85rem', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', marginBottom: '1rem' }}>
+            <div style={{ display: 'grid', gap: '0.85rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginBottom: '1rem' }}>
               {expertCards.map((expert) => {
                 const isSelected = String(selectedExpertId) === String(expert.id);
                 return (
@@ -235,7 +267,7 @@ export default function FarmerConsultationPage() {
           ) : null}
 
           {selectedExpertId && expertSlots.length > 0 && (
-            <div style={{ display: 'grid', gap: '0.85rem', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
+            <div style={{ display: 'grid', gap: '0.85rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
               {expertSlots.map((slot) => (
                 <div
                   key={slot.id}

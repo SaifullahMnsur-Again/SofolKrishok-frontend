@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { farmingAPI } from '../services/api';
+import CropSelector from '../components/CropSelector';
 
 export default function LandDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [land, setLand] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -28,6 +29,8 @@ export default function LandDetailPage() {
     longitude: '',
     area_acres: '',
     notes: '',
+    default_crop: null,
+    default_disease: '',
   });
 
   useEffect(() => {
@@ -71,6 +74,8 @@ export default function LandDetailPage() {
         longitude: data.longitude || '',
         area_acres: data.area_acres || '',
         notes: data.notes || '',
+        default_crop: data.default_crop || null,
+        default_disease: data.default_disease || '',
       });
     } catch (error) {
       console.error('Failed to load land:', error);
@@ -104,6 +109,8 @@ export default function LandDetailPage() {
         latitude: form.latitude ? parseFloat(form.latitude) : null,
         longitude: form.longitude ? parseFloat(form.longitude) : null,
         notes: form.notes,
+        default_crop: form.default_crop || null,
+        default_disease: form.default_disease || '',
       };
       const { data } = await farmingAPI.updateLand(id, updateData);
       setLand(data);
@@ -242,6 +249,28 @@ export default function LandDetailPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          {!editing && (
+            <>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => {
+                  localStorage.setItem('aiContext', JSON.stringify({ landId: id, returnUrl: `/land/${id}` }));
+                  navigate(`/disease-detect`);
+                }}
+              >
+                🔬 Detect Disease
+              </button>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => {
+                  localStorage.setItem('aiContext', JSON.stringify({ landId: id, returnUrl: `/land/${id}` }));
+                  navigate(`/soil-classify`);
+                }}
+              >
+                🌱 Classify Soil
+              </button>
+            </>
+          )}
           <button
             className="btn btn-primary btn-sm"
             onClick={() => setEditing(!editing)}
@@ -370,6 +399,16 @@ export default function LandDetailPage() {
                     Soil Type
                   </div>
                   <div style={{ fontSize: '1rem', marginBottom: 20 }}>{land.soil_type || 'Unclassified'}</div>
+
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                    Default Crop
+                  </div>
+                  <div style={{ fontSize: '1rem', marginBottom: 20 }}>{land.default_crop_name || '—'}</div>
+
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                    Detected Disease
+                  </div>
+                  <div style={{ fontSize: '1rem', marginBottom: 20 }}>{land.default_disease || '—'}</div>
                 </div>
               </div>
 
@@ -452,6 +491,28 @@ export default function LandDetailPage() {
                   </div>
                 </div>
 
+                {/* Default Crop & Disease */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="input-group">
+                    <label className="input-label">Default Crop</label>
+                    <CropSelector
+                      value={form.default_crop}
+                      onChange={(val) => setForm({ ...form, default_crop: val })}
+                      placeholder="Select crop..."
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label className="input-label">Detected Disease</label>
+                    <input
+                      className="input-field"
+                      type="text"
+                      placeholder="e.g., Late Blight"
+                      value={form.default_disease}
+                      onChange={(e) => setForm({ ...form, default_disease: e.target.value })}
+                    />
+                  </div>
+                </div>
+
                 {/* Notes */}
                 <div className="input-group">
                   <label className="input-label">Notes</label>
@@ -492,152 +553,152 @@ export default function LandDetailPage() {
       )}
 
       {/* History Tab */}
-            {/* Cycles Tab */}
-            {activeTab === 'cycles' && (
-              <div className="animate-fade-in-up">
-                {cyclesLoading ? (
-                  <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-                    <div className="loading-spinner" />
-                  </div>
-                ) : cycles.length === 0 ? (
-                  <div className="glass-card" style={{ padding: 40, textAlign: 'center' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: 12 }}>🌾</div>
-                    <div style={{ fontSize: '1rem', fontWeight: 600 }}>No farming cycles yet</div>
-                    <div style={{ color: 'var(--text-secondary)', marginTop: 6 }}>Start a farming cycle to track seasonal activities</div>
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gap: 24 }}>
-                    {cycles.map((cycle) => (
-                      <div key={cycle.id} className="glass-card" style={{ padding: 24 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                          <div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{cycle.name}</div>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4 }}>
-                              Started: {formatDate(cycle.started_at)} {cycle.actual_end_at ? `• Ended: ${formatDate(cycle.actual_end_at)}` : cycle.expected_end_at ? `• Expected: ${formatDate(cycle.expected_end_at)}` : ''}
-                            </div>
-                          </div>
-                          <span
-                            style={{
-                              padding: '4px 12px',
-                              background: 
-                                cycle.status === 'active' ? 'rgba(34,197,94,0.12)' :
-                                cycle.status === 'completed' ? 'rgba(100,116,139,0.12)' :
-                                'rgba(245,158,11,0.12)',
-                              color:
-                                cycle.status === 'active' ? 'var(--primary-600)' :
-                                cycle.status === 'completed' ? 'var(--text-secondary)' :
-                                'var(--accent-600)',
-                              borderRadius: 'var(--radius-full)',
-                              fontSize: '0.8rem',
-                              fontWeight: 600,
-                              textTransform: 'capitalize',
-                            }}
-                          >
-                            {cycle.status}
-                          </span>
-                        </div>
-
-                        {cycle.description && (
-                          <div style={{ fontSize: '0.9rem', marginBottom: 12, lineHeight: 1.5 }}>
-                            {cycle.description}
-                          </div>
-                        )}
-
-                        {/* Cycle Details Grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.04)', borderRadius: 12 }}>
-                          {cycle.soil_preparation_notes && (
-                            <div>
-                              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Soil Notes</div>
-                              <div style={{ fontSize: '0.85rem', marginTop: 4 }}>{cycle.soil_preparation_notes}</div>
-                            </div>
-                          )}
-                          {cycle.expected_yield && (
-                            <div>
-                              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Expected Yield</div>
-                              <div style={{ fontSize: '0.85rem', marginTop: 4 }}>{cycle.expected_yield} kg</div>
-                            </div>
-                          )}
-                          {cycle.actual_yield && (
-                            <div>
-                              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-600)', textTransform: 'uppercase' }}>Actual Yield</div>
-                              <div style={{ fontSize: '0.85rem', marginTop: 4, fontWeight: 600 }}>{cycle.actual_yield} kg</div>
-                            </div>
-                          )}
-                          {cycle.total_investment && (
-                            <div>
-                              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Investment</div>
-                              <div style={{ fontSize: '0.85rem', marginTop: 4 }}>৳{cycle.total_investment}</div>
-                            </div>
-                          )}
-                          {cycle.total_revenue && (
-                            <div>
-                              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-600)', textTransform: 'uppercase' }}>Revenue</div>
-                              <div style={{ fontSize: '0.85rem', marginTop: 4, fontWeight: 600 }}>৳{cycle.total_revenue}</div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* History Table */}
-                        {(cycle.history_entries || []).length > 0 && (
-                          <div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: 12, marginTop: 16 }}>📋 Modification History</div>
-                            <div style={{ overflowX: 'auto' }}>
-                              <table style={{
-                                width: '100%',
-                                borderCollapse: 'collapse',
-                                fontSize: '0.85rem',
-                              }}>
-                                <thead>
-                                  <tr style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '2px solid rgba(255,255,255,0.08)' }}>
-                                    <th style={{ padding: '10px', textAlign: 'left', fontWeight: 600 }}>Date & Time</th>
-                                    <th style={{ padding: '10px', textAlign: 'left', fontWeight: 600 }}>Action</th>
-                                    <th style={{ padding: '10px', textAlign: 'left', fontWeight: 600 }}>Summary</th>
-                                    <th style={{ padding: '10px', textAlign: 'left', fontWeight: 600 }}>Modified By</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {(cycle.history_entries || []).map((entry, idx) => (
-                                    <tr key={entry.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                                      <td style={{ padding: '10px' }}>{formatDateTime(entry.created_at)}</td>
-                                      <td style={{ padding: '10px' }}>
-                                        <span style={{
-                                          display: 'inline-block',
-                                          padding: '2px 8px',
-                                          background: entry.action_type === 'created' ? 'rgba(34,197,94,0.12)' :
-                                                      entry.action_type === 'status_changed' ? 'rgba(59,130,246,0.12)' :
-                                                      entry.action_type === 'completed' ? 'rgba(168,85,247,0.12)' :
-                                                      'rgba(156,163,175,0.12)',
-                                          color: entry.action_type === 'created' ? 'var(--primary-600)' :
-                                                 entry.action_type === 'status_changed' ? 'var(--blue-600)' :
-                                                 entry.action_type === 'completed' ? '#a855f7' :
-                                                 'var(--text-secondary)',
-                                          borderRadius: 'var(--radius-full)',
-                                          fontSize: '0.75rem',
-                                          fontWeight: 600,
-                                          textTransform: 'capitalize',
-                                        }}>
-                                          {entry.action_type.replace('_', ' ')}
-                                        </span>
-                                      </td>
-                                      <td style={{ padding: '10px' }}>{entry.summary}</td>
-                                      <td style={{ padding: '10px', color: 'var(--text-secondary)' }}>
-                                        {entry.modified_by_name || 'System'}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        )}
+      {/* Cycles Tab */}
+      {activeTab === 'cycles' && (
+        <div className="animate-fade-in-up">
+          {cyclesLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+              <div className="loading-spinner" />
+            </div>
+          ) : cycles.length === 0 ? (
+            <div className="glass-card" style={{ padding: 40, textAlign: 'center' }}>
+              <div style={{ fontSize: '3rem', marginBottom: 12 }}>🌾</div>
+              <div style={{ fontSize: '1rem', fontWeight: 600 }}>No farming cycles yet</div>
+              <div style={{ color: 'var(--text-secondary)', marginTop: 6 }}>Start a farming cycle to track seasonal activities</div>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: 24 }}>
+              {cycles.map((cycle) => (
+                <div key={cycle.id} className="glass-card" style={{ padding: 24 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                    <div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{cycle.name}</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+                        Started: {formatDate(cycle.started_at)} {cycle.actual_end_at ? `• Ended: ${formatDate(cycle.actual_end_at)}` : cycle.expected_end_at ? `• Expected: ${formatDate(cycle.expected_end_at)}` : ''}
                       </div>
-                    ))}
+                    </div>
+                    <span
+                      style={{
+                        padding: '4px 12px',
+                        background:
+                          cycle.status === 'active' ? 'rgba(34,197,94,0.12)' :
+                            cycle.status === 'completed' ? 'rgba(100,116,139,0.12)' :
+                              'rgba(245,158,11,0.12)',
+                        color:
+                          cycle.status === 'active' ? 'var(--primary-600)' :
+                            cycle.status === 'completed' ? 'var(--text-secondary)' :
+                              'var(--accent-600)',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {cycle.status}
+                    </span>
                   </div>
-                )}
-              </div>
-            )}
 
-            {/* History Tab */}
+                  {cycle.description && (
+                    <div style={{ fontSize: '0.9rem', marginBottom: 12, lineHeight: 1.5 }}>
+                      {cycle.description}
+                    </div>
+                  )}
+
+                  {/* Cycle Details Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.04)', borderRadius: 12 }}>
+                    {cycle.soil_preparation_notes && (
+                      <div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Soil Notes</div>
+                        <div style={{ fontSize: '0.85rem', marginTop: 4 }}>{cycle.soil_preparation_notes}</div>
+                      </div>
+                    )}
+                    {cycle.expected_yield && (
+                      <div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Expected Yield</div>
+                        <div style={{ fontSize: '0.85rem', marginTop: 4 }}>{cycle.expected_yield} kg</div>
+                      </div>
+                    )}
+                    {cycle.actual_yield && (
+                      <div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-600)', textTransform: 'uppercase' }}>Actual Yield</div>
+                        <div style={{ fontSize: '0.85rem', marginTop: 4, fontWeight: 600 }}>{cycle.actual_yield} kg</div>
+                      </div>
+                    )}
+                    {cycle.total_investment && (
+                      <div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Investment</div>
+                        <div style={{ fontSize: '0.85rem', marginTop: 4 }}>৳{cycle.total_investment}</div>
+                      </div>
+                    )}
+                    {cycle.total_revenue && (
+                      <div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-600)', textTransform: 'uppercase' }}>Revenue</div>
+                        <div style={{ fontSize: '0.85rem', marginTop: 4, fontWeight: 600 }}>৳{cycle.total_revenue}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* History Table */}
+                  {(cycle.history_entries || []).length > 0 && (
+                    <div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: 12, marginTop: 16 }}>📋 Modification History</div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '0.85rem',
+                        }}>
+                          <thead>
+                            <tr style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '2px solid rgba(255,255,255,0.08)' }}>
+                              <th style={{ padding: '10px', textAlign: 'left', fontWeight: 600 }}>Date & Time</th>
+                              <th style={{ padding: '10px', textAlign: 'left', fontWeight: 600 }}>Action</th>
+                              <th style={{ padding: '10px', textAlign: 'left', fontWeight: 600 }}>Summary</th>
+                              <th style={{ padding: '10px', textAlign: 'left', fontWeight: 600 }}>Modified By</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(cycle.history_entries || []).map((entry, idx) => (
+                              <tr key={entry.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                <td style={{ padding: '10px' }}>{formatDateTime(entry.created_at)}</td>
+                                <td style={{ padding: '10px' }}>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '2px 8px',
+                                    background: entry.action_type === 'created' ? 'rgba(34,197,94,0.12)' :
+                                      entry.action_type === 'status_changed' ? 'rgba(59,130,246,0.12)' :
+                                        entry.action_type === 'completed' ? 'rgba(168,85,247,0.12)' :
+                                          'rgba(156,163,175,0.12)',
+                                    color: entry.action_type === 'created' ? 'var(--primary-600)' :
+                                      entry.action_type === 'status_changed' ? 'var(--blue-600)' :
+                                        entry.action_type === 'completed' ? '#a855f7' :
+                                          'var(--text-secondary)',
+                                    borderRadius: 'var(--radius-full)',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    textTransform: 'capitalize',
+                                  }}>
+                                    {entry.action_type.replace('_', ' ')}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px' }}>{entry.summary}</td>
+                                <td style={{ padding: '10px', color: 'var(--text-secondary)' }}>
+                                  {entry.modified_by_name || 'System'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* History Tab */}
       {activeTab === 'history' && (
         <div className="animate-fade-in-up">
           {historyLoading ? (
@@ -717,6 +778,46 @@ export default function LandDetailPage() {
                           <div style={{ fontWeight: 600 }}>{entry.summary}</div>
                           <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{formatDateTime(entry.created_at)}</div>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* AI Detections */}
+              {(history.disease_history || []).length > 0 && (
+                <div className="glass-card" style={{ padding: 24 }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 16 }}>🔬 Disease Detections</div>
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    {history.disease_history.map((entry) => (
+                      <div key={entry.id} style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', borderLeft: '3px solid #8b5cf6' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                          <div style={{ fontWeight: 600 }}>Detected: {entry.predicted_class} ({entry.confidence}%)</div>
+                          <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{formatDateTime(entry.created_at)}</div>
+                        </div>
+                        {entry.prediction_feedback && (
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4 }}>Feedback: {entry.prediction_feedback}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Soil Classifications */}
+              {(history.soil_history || []).length > 0 && (
+                <div className="glass-card" style={{ padding: 24 }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 16 }}>🌱 Soil Classifications</div>
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    {history.soil_history.map((entry) => (
+                      <div key={entry.id} style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', borderLeft: '3px solid #10b981' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                          <div style={{ fontWeight: 600 }}>Classified as: {entry.predicted_type} ({entry.confidence}%)</div>
+                          <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{formatDateTime(entry.created_at)}</div>
+                        </div>
+                        {entry.prediction_feedback && (
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4 }}>Feedback: {entry.prediction_feedback}</div>
+                        )}
                       </div>
                     ))}
                   </div>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { diseaseAPI } from '../services/api';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { diseaseAPI, farmingAPI } from '../services/api';
 
 /* ── Emoji map ───────────────────────────────────────────────── */
 const CROP_STICKERS = {
@@ -207,8 +208,17 @@ function arrowStyle(side) {
   };
 }
 
-  /* ── Main Page ─── */
+/* ── Main Page ─── */
 export default function DiseaseDetectPage() {
+  const navigate = useNavigate();
+
+  const aiContextStr = localStorage.getItem('aiContext');
+  const aiContext = aiContextStr ? JSON.parse(aiContextStr) : null;
+  const initialLandId = aiContext?.landId || '';
+
+  const [lands, setLands] = useState([]);
+  const [selectedLand, setSelectedLand] = useState(initialLandId);
+
   const [selectedCrop, setSelectedCrop] = useState('');
   const [cropQuery, setCropQuery] = useState('');
   const [diseaseRegistry, setDiseaseRegistry] = useState([]);
@@ -217,11 +227,32 @@ export default function DiseaseDetectPage() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [imageTakenAt, setImageTakenAt] = useState(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  });
+  const [feedback, setFeedback] = useState(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+
   const fileInputRef = useRef(null);
   const searchRef = useRef(null);
-  // preferredLang only changes when user actively types — not when query is cleared
   const preferredLangRef = useRef(null);
   const [preferredLang, setPreferredLang] = useState(null); // 'en' | 'bn' | null
+
+  useEffect(() => {
+    if (initialLandId) {
+      setSelectedLand(initialLandId);
+    }
+  }, [initialLandId]);
+
+  useEffect(() => {
+    farmingAPI.getLands().then(({ data }) => {
+      setLands(data.results || data);
+      if (initialLandId) setSelectedLand(initialLandId);
+    }).catch(() => { });
+  }, [initialLandId]);
 
   useEffect(() => {
     diseaseAPI.getActiveCrops()
@@ -299,28 +330,48 @@ export default function DiseaseDetectPage() {
   /* ── handlers ── */
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) { setImageFile(file); setImagePreview(URL.createObjectURL(file)); setResult(null); setError(''); }
+    if (file) { setImageFile(file); setImagePreview(URL.createObjectURL(file)); setResult(null); setError(''); setFeedback(null); }
   };
   const handleDrop = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) { setImageFile(file); setImagePreview(URL.createObjectURL(file)); setResult(null); setError(''); }
+    if (file && file.type.startsWith('image/')) { setImageFile(file); setImagePreview(URL.createObjectURL(file)); setResult(null); setError(''); setFeedback(null); }
   };
   const handleSubmit = async () => {
     if (!imageFile || !selectedCrop) return;
-    setLoading(true); setError(''); setResult(null);
+    setLoading(true); setError(''); setResult(null); setFeedback(null);
     try {
       const fd = new FormData();
       fd.append('image', imageFile);
       fd.append('crop_type', selectedCrop);
+      if (selectedLand) fd.append('land_id', selectedLand);
+      if (imageTakenAt) fd.append('image_taken_at', new Date(imageTakenAt).toISOString());
       const { data } = await diseaseAPI.detect(fd);
       setResult(data);
     } catch (err) {
       setError(err.response?.data?.error || 'Detection failed. Please try again.');
     } finally { setLoading(false); }
   };
+  const handleFeedback = async (value) => {
+    if (!result?.log_id) return;
+    setFeedbackLoading(true);
+    try {
+      await diseaseAPI.submitFeedback(result.log_id, value);
+      setFeedback(value);
+      if (aiContext?.returnUrl) {
+        setTimeout(() => {
+          localStorage.removeItem('aiContext');
+          navigate(aiContext.returnUrl);
+        }, 1500);
+      }
+    } catch (err) {
+      console.error('Feedback failed', err);
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
   const handleReset = () => {
-    setImageFile(null); setImagePreview(null); setResult(null);
+    setImageFile(null); setImagePreview(null); setResult(null); setFeedback(null);
     setSelectedCrop(''); setCropQuery(''); setError('');
   };
 
@@ -412,6 +463,34 @@ export default function DiseaseDetectPage() {
           {/* Step 2: Image Upload */}
           <div>
             <h3 style={{ fontWeight: 700, margin: '0 0 10px', fontSize: '0.95rem' }}>2. Upload Image</h3>
+
+            {lands.length > 0 && (
+              <div className="input-group" style={{ marginBottom: 16 }}>
+                <label className="input-label">Link to Land Parcel (optional)</label>
+                <select
+                  key={`select-${selectedLand}-${lands.length}`}
+                  className="input-field"
+                  value={selectedLand}
+                  onChange={(e) => setSelectedLand(e.target.value)}
+                >
+                  <option value="">Select a land parcel...</option>
+                  {lands.map((l) => (
+                    <option key={l.id} value={String(l.id)}>{l.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="input-group" style={{ marginBottom: 16 }}>
+              <label className="input-label">Image Taken At</label>
+              <input
+                type="datetime-local"
+                className="input-field"
+                value={imageTakenAt}
+                onChange={(e) => setImageTakenAt(e.target.value)}
+              />
+            </div>
+
             <div
               className="upload-zone"
               onClick={() => fileInputRef.current?.click()}
@@ -502,6 +581,42 @@ export default function DiseaseDetectPage() {
                   </div>
                 </div>
               ))}
+
+              {/* Feedback Section */}
+              <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: 12 }}>
+                  Did the model detect the disease correctly?
+                </div>
+                {feedback ? (
+                  <div style={{ padding: '12px', background: 'rgba(59,130,246,0.1)', borderRadius: 'var(--radius-md)', color: 'var(--blue-600)', fontWeight: 600, textAlign: 'center' }}>
+                    Thank you for your feedback!
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => handleFeedback('correct')} disabled={feedbackLoading}>
+                      👍 Yes
+                    </button>
+                    <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => handleFeedback('incorrect')} disabled={feedbackLoading}>
+                      👎 No
+                    </button>
+                    <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => handleFeedback('not_sure')} disabled={feedbackLoading}>
+                      🤷 Not Sure
+                    </button>
+                  </div>
+                )}
+                {aiContext?.returnUrl && (
+                  <button
+                    className="btn btn-secondary"
+                    style={{ width: '100%', marginTop: 12 }}
+                    onClick={() => {
+                      localStorage.removeItem('aiContext');
+                      navigate(aiContext.returnUrl);
+                    }}
+                  >
+                    Return to Land
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>

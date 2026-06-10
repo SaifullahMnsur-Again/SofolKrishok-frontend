@@ -123,7 +123,7 @@ export default function LandsPage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 12, flexWrap: 'wrap' }}>
         <div>
           <h1 className="page-title">🌾 My Lands</h1>
           <p className="page-subtitle" style={{ margin: 0 }}>Manage your farming land parcels</p>
@@ -136,7 +136,7 @@ export default function LandsPage() {
       {showForm && (
         <div className="glass-card animate-fade-in-up" style={{ padding: 24, marginBottom: 20 }}>
           <h3 style={{ fontWeight: 700, marginBottom: 16 }}>Register New Land</h3>
-          <form onSubmit={handleCreate} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <form onSubmit={handleCreate} className="mobile-form-stack" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div className="input-group">
               <label className="input-label">Land Name</label>
               <input className="input-field" placeholder="e.g., Rajshahi Mango Garden" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
@@ -199,7 +199,7 @@ export default function LandsPage() {
                   📐 {land.area_acres} acres
                 </div>
               )}
-              <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              <div className="land-card-actions" style={{ display: 'flex', gap: 8, marginTop: 14 }}>
                 <Link to={`/land/${land.id}`} className="btn btn-primary btn-sm" style={{ flex: 1 }}>
                   👁️ View Details
                 </Link>
