@@ -257,7 +257,7 @@ function GeminiConfigPanel() {
           <div style={{ flex: 1 }}>
             <h4 style={{ margin: '0 0 4px', color: '#0f172a' }}>Gemini AI Configuration</h4>
             <p style={{ margin: 0, color: '#64748b', fontSize: '0.88rem' }}>
-              Manage the Google Gemini API key and model hierarchy used by the AI assistant, voice commands, and automated analysis.
+              Manage the Google Gemini API key and model hierarchy used by the AI assistant and automated analysis.
             </p>
           </div>
           {updatedAt && (
@@ -529,7 +529,7 @@ function UsageHistoryPanel() {
               <option value="disease_detection">Disease detection</option>
               <option value="soil_classification">Soil classification</option>
               <option value="gemini_chat">Gemini chat</option>
-              <option value="voice_command">Voice command</option>
+
               <option value="weather_forecast">Weather forecast</option>
             </select>
           </div>

@@ -1918,10 +1918,7 @@ select.input-field {
     min-height: auto;
   }
 
-  /* Voice FAB adjustment for bottom nav */
-  .fab-voice {
-    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important;
-  }
+
 
   /* Input fields touch-friendly */
   .input-field,

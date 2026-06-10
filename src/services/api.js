@@ -149,10 +149,6 @@ export const farmingAPI = {
 // ============ AI Chat (Memory-Aware) ============
 export const chatAPI = {
   getSoilLogs: () => api.get('/ai/soil-classify/logs/'),
-  voiceCommand: (text) => api.post('/ai/voice-command/', { text }),
-  voiceCommandAudio: (formData) => api.post('/ai/voice-command/', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }),
   getSessions: () => api.get('/ai/chat-sessions/'),
   getSession: (id) => api.get(`/ai/chat-sessions/${id}/`),
   createSession: (data) => api.post('/ai/chat-sessions/', data),

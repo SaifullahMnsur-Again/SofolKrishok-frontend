@@ -23,8 +23,6 @@ export default function FarmerLayout() {
   const { toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isListening, setIsListening] = useState(false);
-  const [voiceStatus, setVoiceStatus] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (loading) {
@@ -48,62 +46,6 @@ export default function FarmerLayout() {
     navigate('/login');
   };
 
-  const handleVoiceCommand = async () => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      alert('Microphone API is not supported in this browser.');
-      return;
-    }
-
-    let stream;
-    setIsListening(true);
-    setVoiceStatus('Listening... speak now');
-
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      const chunks = [];
-
-      recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          chunks.push(event.data);
-        }
-      };
-
-      const done = new Promise((resolve) => {
-        recorder.onstop = resolve;
-      });
-
-      recorder.start();
-      setTimeout(() => {
-        if (recorder.state !== 'inactive') recorder.stop();
-      }, 3500);
-
-      await done;
-      setVoiceStatus('Transcribing...');
-
-      const blob = new Blob(chunks, { type: 'audio/webm' });
-      const formData = new FormData();
-      formData.append('audio', blob, 'voice.webm');
-
-      const { chatAPI } = await import('../services/api');
-      const { data } = await chatAPI.voiceCommandAudio(formData);
-
-      if (data.intent === 'NAVIGATE') {
-        setVoiceStatus(data.voice_response);
-        navigate(data.target);
-      } else {
-        setVoiceStatus(data.original_text ? `Heard: ${data.original_text}` : 'Command not recognized.');
-      }
-    } catch (err) {
-      setVoiceStatus(err?.response?.data?.error || 'Voice processor failed.');
-    } finally {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-      setIsListening(false);
-      setTimeout(() => setVoiceStatus(''), 2500);
-    }
-  };
 
   const isActiveRoute = (path) => location.pathname === path;
 
@@ -178,52 +120,6 @@ export default function FarmerLayout() {
           <Outlet />
         </div>
         
-        {/* Floating Voice Assistant Button */}
-        <button 
-          onClick={handleVoiceCommand}
-          className={`fab-voice ${isListening ? 'listening' : ''}`}
-          title="Voice Assistant"
-          style={{
-            position: 'fixed',
-            bottom: '2rem',
-            right: '2rem',
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            background: isListening ? '#ef4444' : 'var(--primary-color)',
-            color: 'white',
-            border: 'none',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            fontSize: '1.3rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 150,
-            transition: 'all 0.3s ease',
-            animation: isListening ? 'pulse 1.5s infinite' : 'none'
-          }}
-        >
-          {isListening ? '🎙️' : '🎤'}
-        </button>
-        {voiceStatus && (
-          <div style={{
-            position: 'fixed',
-            bottom: '6.5rem',
-            right: '2rem',
-            padding: '10px 14px',
-            background: 'var(--glass-bg)',
-            border: '1px solid var(--glass-border)',
-            borderRadius: '12px',
-            color: 'var(--text-primary)',
-            backdropFilter: 'blur(12px)',
-            zIndex: 150,
-            maxWidth: '280px',
-            fontSize: '0.82rem',
-          }}>
-            {voiceStatus}
-          </div>
-        )}
 
         {/* Mobile Bottom Navigation */}
         <nav className="mobile-bottom-nav">
