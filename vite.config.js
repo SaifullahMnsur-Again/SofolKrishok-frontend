@@ -39,15 +39,17 @@ export default defineConfig({
         ]
       },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         
-        // 1. Force the Service Worker to completely ignore raw URL bar entries targeting /api/
+        // Ignore /api/* navigation (handled by backend proxy)
         navigateFallbackDenylist: [/^\/api/],
 
-        // 2. Keep your existing runtime handlers intact for in-app data fetching
+        // Only cache requests to the real API subdomain
         runtimeCaching: [
           {
-            urlPattern: /\/api\/.*/i,
+            urlPattern: /^https:\/\/api\.sofolkrishok\.saifullahmnsur\.dev\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
