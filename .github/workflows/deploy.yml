@@ -61,6 +61,10 @@ jobs:
         with:
           context: .
           push: true
+          no-cache: true
+          build-args: |
+            BUILDTIME=${{ github.run_id }}
+            GIT_SHA=${{ github.sha }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/sofolkrishok-frontend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/sofolkrishok-frontend:${{ github.sha }}
