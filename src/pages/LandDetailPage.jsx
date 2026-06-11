@@ -33,23 +33,17 @@ export default function LandDetailPage() {
     default_disease: '',
   });
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    loadLand();
-  }, [id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadLand(); }, [id]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (activeTab === 'history' && !history) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      loadHistory();
-    }
+    if (activeTab === 'history' && !history) loadHistory();
   }, [activeTab, history]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (activeTab === 'cycles' && cycles.length === 0) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      loadCycles();
-    }
+    if (activeTab === 'cycles' && cycles.length === 0) loadCycles();
   }, [activeTab, cycles.length]);
 
   const loadCycles = async () => {
@@ -660,7 +654,7 @@ export default function LandDetailPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {(cycle.history_entries || []).map((entry, _idx) => (
+                            {(cycle.history_entries || []).map((entry) => (
                               <tr key={entry.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                                 <td style={{ padding: '10px' }}>{formatDateTime(entry.created_at)}</td>
                                 <td style={{ padding: '10px' }}>

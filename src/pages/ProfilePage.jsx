@@ -648,7 +648,7 @@ export default function ProfilePage({ portal = 'farmer' }) {
 }
 
 /* ── Password Change Sub-component ───────────────────────────── */
-function PasswordChangeForm({ flash: _flash }) {
+function PasswordChangeForm() {
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm_password: '' });

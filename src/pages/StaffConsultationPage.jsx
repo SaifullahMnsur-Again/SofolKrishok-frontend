@@ -117,8 +117,8 @@ export default function StaffConsultationPage() {
     fetchData();
   }, [canAssignShift]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     loadCoverage();
   }, [canAssignShift, coverageDays, coverageZone, coverageExpertId, coverageExpertTag]);
 
