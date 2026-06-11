@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { soilAPI, farmingAPI } from '../services/api';
 
 export default function SoilClassifyPage() {

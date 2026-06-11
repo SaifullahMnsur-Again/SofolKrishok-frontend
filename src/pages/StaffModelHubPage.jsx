@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { aiModelAPI, cropAPI } from '../services/api';
@@ -762,7 +762,7 @@ export default function StaffModelHubPage() {
   const clearSelection = () => setSelectedIds([]);
   const clearSoilSelection = () => setSoilSelectedIds([]);
 
-  const cropById = (id) => cropList.find((crop) => crop.id === id) || null;
+
 
   const loadInventory = async () => {
     const res = await aiModelAPI.getModelInventory();

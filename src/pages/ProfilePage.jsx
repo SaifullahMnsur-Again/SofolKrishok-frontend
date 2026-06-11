@@ -5,12 +5,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 
 /* ── helpers ──────────────────────────────────────────────────── */
-function resolveAvatar(url) {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  const base = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
-  return url.startsWith('/api/') ? url : `${base}${url}`;
-}
 
 function InfoRow({ label, value, icon }) {
   return (
@@ -654,7 +648,7 @@ export default function ProfilePage({ portal = 'farmer' }) {
 }
 
 /* ── Password Change Sub-component ───────────────────────────── */
-function PasswordChangeForm({ flash }) {
+function PasswordChangeForm({ flash: _flash }) {
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm_password: '' });

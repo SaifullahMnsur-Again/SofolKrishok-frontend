@@ -20,7 +20,7 @@ export default function LandDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [cycles, setCycles] = useState([]);
   const [cyclesLoading, setCyclesLoading] = useState(false);
-  const [selectedCycle, setSelectedCycle] = useState(null);
+
 
   const [form, setForm] = useState({
     name: '',
@@ -34,20 +34,23 @@ export default function LandDetailPage() {
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     loadLand();
   }, [id]);
 
   useEffect(() => {
     if (activeTab === 'history' && !history) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       loadHistory();
     }
-  }, [activeTab]);
+  }, [activeTab, history]);
 
   useEffect(() => {
     if (activeTab === 'cycles' && cycles.length === 0) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       loadCycles();
     }
-  }, [activeTab]);
+  }, [activeTab, cycles.length]);
 
   const loadCycles = async () => {
     setCyclesLoading(true);
@@ -657,7 +660,7 @@ export default function LandDetailPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {(cycle.history_entries || []).map((entry, idx) => (
+                            {(cycle.history_entries || []).map((entry, _idx) => (
                               <tr key={entry.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                                 <td style={{ padding: '10px' }}>{formatDateTime(entry.created_at)}</td>
                                 <td style={{ padding: '10px' }}>

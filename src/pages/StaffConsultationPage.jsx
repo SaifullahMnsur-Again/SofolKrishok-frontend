@@ -118,6 +118,7 @@ export default function StaffConsultationPage() {
   }, [canAssignShift]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     loadCoverage();
   }, [canAssignShift, coverageDays, coverageZone, coverageExpertId, coverageExpertTag]);
 

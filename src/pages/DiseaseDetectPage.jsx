@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { diseaseAPI, farmingAPI } from '../services/api';
 
 /* ── Emoji map ───────────────────────────────────────────────── */
