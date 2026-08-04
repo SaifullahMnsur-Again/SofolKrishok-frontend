@@ -38,8 +38,6 @@ function getCropSticker(cropName) {
 }
 
 /* ── Language detection ──────────────────────────────────────── */
-// Returns 'bn' if the string contains any Bengali Unicode characters,
-// 'en' if it contains Latin letters, null if empty.
 function detectLang(text) {
   const trimmed = (text || '').trim();
   if (!trimmed) return null;
@@ -91,7 +89,6 @@ function CropCarousel({ items, selected, onSelect, displayLang }) {
 
   return (
     <div style={{ position: 'relative', userSelect: 'none' }}>
-      {/* Left arrow */}
       <button
         type="button"
         onClick={() => slide(-1)}
@@ -99,7 +96,6 @@ function CropCarousel({ items, selected, onSelect, displayLang }) {
         style={arrowStyle('left')}
       >‹</button>
 
-      {/* Track */}
       <div
         ref={trackRef}
         onMouseDown={onMouseDown}
@@ -118,7 +114,6 @@ function CropCarousel({ items, selected, onSelect, displayLang }) {
       >
         {items.map((item) => {
           const isSelected = selected === item.crop_type;
-          // Choose label based on detected language of search query
           const label = displayLang === 'en'
             ? item.crop_name_english
             : displayLang === 'bn'
@@ -174,7 +169,6 @@ function CropCarousel({ items, selected, onSelect, displayLang }) {
         })}
       </div>
 
-      {/* Right arrow */}
       <button
         type="button"
         onClick={() => slide(1)}
@@ -239,7 +233,7 @@ export default function DiseaseDetectPage() {
   const fileInputRef = useRef(null);
   const searchRef = useRef(null);
   const preferredLangRef = useRef(null);
-  const [preferredLang, setPreferredLang] = useState(null); // 'en' | 'bn' | null
+  const [preferredLang, setPreferredLang] = useState(null);
 
   useEffect(() => {
     if (initialLandId) {
@@ -257,9 +251,12 @@ export default function DiseaseDetectPage() {
   useEffect(() => {
     diseaseAPI.getActiveCrops()
       .then(({ data }) => {
+        // Updated parsing logic to extract registry from response
         const registry = Array.isArray(data?.disease?.registry)
           ? data.disease.registry
-          : Array.isArray(data?.registry) ? data.registry : [];
+          : Array.isArray(data?.registry)
+            ? data.registry
+            : Array.isArray(data) ? data : [];
         setDiseaseRegistry(registry);
       })
       .catch(() => setDiseaseRegistry([]));
@@ -269,13 +266,13 @@ export default function DiseaseDetectPage() {
   const cropOptions = useMemo(() => {
     const grouped = new Map();
     diseaseRegistry
-      .filter((m) => m?.is_active)
       .forEach((m) => {
-        const key = String(m.crop_name_english || m.crop_type || '').toLowerCase();
-        if (!key) return;
-        if (!grouped.has(key)) {
-          grouped.set(key, {
-            crop_type: m.crop_name_english || m.crop_type,
+        const cropKey = (m.model_name || m.crop_type || m.crop_name_english || '').toLowerCase();
+        if (!cropKey) return;
+        
+        if (!grouped.has(cropKey)) {
+          grouped.set(cropKey, {
+            crop_type: m.model_name || m.crop_type?.toLowerCase() || m.crop_name_english?.toLowerCase(),
             crop_name_english: m.crop_name_english || m.crop_type,
             crop_name_bengali: m.crop_name_bengali || '',
             emoji: getCropSticker(m.crop_name_english || m.crop_type),
@@ -288,10 +285,8 @@ export default function DiseaseDetectPage() {
     );
   }, [diseaseRegistry]);
 
-  /* queryLang: only used for the hint pill and filtering — transient */
   const queryLang = useMemo(() => detectLang(cropQuery), [cropQuery]);
 
-  /* When user types, lock in preferredLang */
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setCropQuery(val);
@@ -300,14 +295,8 @@ export default function DiseaseDetectPage() {
       preferredLangRef.current = lang;
       setPreferredLang(lang);
     }
-    // If cleared by the user (backspace to empty), reset preference too
-    // if (!val.trim()) {
-    //   preferredLangRef.current = null;
-    //   setPreferredLang(null);
-    // }
   };
 
-  /* Filter crops based on query language */
   const filteredCrops = useMemo(() => {
     const q = cropQuery.trim().toLowerCase();
     if (!q) return cropOptions;
@@ -321,13 +310,11 @@ export default function DiseaseDetectPage() {
 
   const selectedLabel = cropOptions.find((c) => c.crop_type === selectedCrop);
 
-  /* Select a crop: clear the search query but DO NOT reset preferredLang */
   const handleCropSelect = (ct) => {
     setSelectedCrop(ct);
-    setCropQuery('');  // clear the input text only — preferredLang stays unchanged
+    setCropQuery('');
   };
 
-  /* ── handlers ── */
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) { setImageFile(file); setImagePreview(URL.createObjectURL(file)); setResult(null); setError(''); setFeedback(null); }
@@ -381,12 +368,8 @@ export default function DiseaseDetectPage() {
       <p className="page-subtitle">Upload a photo of your crop to identify diseases using AI</p>
 
       <div className="grid grid-2">
-        {/* ── Left: Controls ── */}
         <div className="glass-card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-          {/* Step 1 */}
           <div>
-            {/* Header row */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <h3 style={{ fontWeight: 700, margin: 0, fontSize: '0.95rem' }}>1. Select Crop</h3>
               {selectedLabel && (
@@ -398,7 +381,6 @@ export default function DiseaseDetectPage() {
                   borderRadius: 99, padding: '3px 10px', flexShrink: 0,
                 }}>
                   {selectedLabel.emoji}&nbsp;
-                  {/* badge uses stable preferredLang, not transient queryLang */}
                   {preferredLang === 'en'
                     ? selectedLabel.crop_name_english
                     : (selectedLabel.crop_name_bengali || selectedLabel.crop_name_english)}
@@ -406,7 +388,6 @@ export default function DiseaseDetectPage() {
               )}
             </div>
 
-            {/* Search bar */}
             <div style={{ position: 'relative', marginBottom: 10 }}>
               <span style={{
                 position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)',
@@ -435,7 +416,6 @@ export default function DiseaseDetectPage() {
               )}
             </div>
 
-            {/* Language hint pill — only shown while typing */}
             {queryLang && (
               <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{
@@ -451,7 +431,6 @@ export default function DiseaseDetectPage() {
               </div>
             )}
 
-            {/* Carousel */}
             <CropCarousel
               items={filteredCrops}
               selected={selectedCrop}
@@ -460,7 +439,6 @@ export default function DiseaseDetectPage() {
             />
           </div>
 
-          {/* Step 2: Image Upload */}
           <div>
             <h3 style={{ fontWeight: 700, margin: '0 0 10px', fontSize: '0.95rem' }}>2. Upload Image</h3>
 
@@ -513,7 +491,6 @@ export default function DiseaseDetectPage() {
             </div>
           </div>
 
-          {/* Actions */}
           <div style={{ display: 'flex', gap: 10 }}>
             <button
               className="btn btn-primary btn-lg"
@@ -539,7 +516,6 @@ export default function DiseaseDetectPage() {
           )}
         </div>
 
-        {/* ── Right: Results ── */}
         <div className="glass-card result-card">
           <div className="result-title">📊 Detection Results</div>
           {!result ? (
@@ -582,7 +558,6 @@ export default function DiseaseDetectPage() {
                 </div>
               ))}
 
-              {/* Feedback Section */}
               <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                 <div style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: 12 }}>
                   Did the model detect the disease correctly?
