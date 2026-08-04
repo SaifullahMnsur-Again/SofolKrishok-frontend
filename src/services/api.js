@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://sofolkrishok-api.saifullahmnsur.dev').replace(/\/+$/, '');
 
 const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 });
 
 // SOLUTION #1: Separate axios instance for auth (avoids interceptor recursion)
