@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  // Fixes the white screen by mapping assets to the GitHub Pages repo path
-  base: '/SofolKrishok-frontend/',
+  // Custom domains serve from the root path
+  base: '/',
 
   server: {
     proxy: {
@@ -49,7 +49,7 @@ export default defineConfig({
         // Ignore /api/* navigation
         navigateFallbackDenylist: [/^\/api/],
 
-        // Updated to match your active backend subdomain: api-sofolkrishok
+        // Cache responses from active backend tunnel
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api-sofolkrishok\.saifullahmnsur\.dev\/.*/i,

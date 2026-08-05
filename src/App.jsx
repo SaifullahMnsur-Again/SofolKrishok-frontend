@@ -50,16 +50,15 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <CartProvider>
-            {/* Added basename dynamically from Vite environment */}
-            <BrowserRouter basename={import.meta.env.BASE_URL}>
+            <BrowserRouter>
               <Routes>
-                {/* Public routes - anyone can view */}
+                {/* Public routes */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/features" element={<FeaturesPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/pricing" element={<PricingPage />} />
 
-                {/* Auth routes - only non-authenticated users can access */}
+                {/* Auth routes */}
                 <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
                 <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
 
@@ -101,7 +100,7 @@ function App() {
                   <Route path="audit-logs" element={<StaffAuditLogsPage />} />
                 </Route>
 
-                {/* Catch-all: redirect unknown paths to home */}
+                {/* Catch-all */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </BrowserRouter>

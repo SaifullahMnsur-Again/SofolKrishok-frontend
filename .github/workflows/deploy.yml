@@ -25,6 +25,9 @@ jobs:
           VITE_API_BASE_URL: https://api-sofolkrishok.saifullahmnsur.dev
         run: npm run build
 
+      - name: Create CNAME in Build Folder
+        run: echo "sofolkrishok.saifullahmnsur.dev" > dist/CNAME
+
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
