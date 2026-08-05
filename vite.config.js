@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // Fixes the white screen by mapping assets to the GitHub Pages repo path
+  base: '/SofolKrishok-frontend/',
+
   server: {
     proxy: {
       '/api': {
@@ -43,13 +46,13 @@ export default defineConfig({
         clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         
-        // Ignore /api/* navigation (handled by backend proxy)
+        // Ignore /api/* navigation
         navigateFallbackDenylist: [/^\/api/],
 
-        // Only cache requests to the real API subdomain
+        // Updated to match your active backend subdomain: api-sofolkrishok
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\.sofolkrishok\.saifullahmnsur\.dev\/.*/i,
+            urlPattern: /^https:\/\/api-sofolkrishok\.saifullahmnsur\.dev\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',

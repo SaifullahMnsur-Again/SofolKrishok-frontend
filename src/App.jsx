@@ -50,64 +50,65 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <CartProvider>
-          <BrowserRouter>
-          <Routes>
-            {/* Public routes - anyone can view */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/features" element={<FeaturesPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
+            {/* Added basename dynamically from Vite environment */}
+            <BrowserRouter basename={import.meta.env.BASE_URL}>
+              <Routes>
+                {/* Public routes - anyone can view */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/features" element={<FeaturesPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
 
-            {/* Auth routes - only non-authenticated users can access */}
-            <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
-            <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
+                {/* Auth routes - only non-authenticated users can access */}
+                <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
+                <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
 
-            {/* Farmer routes (Protected) */}
-            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/profile" element={<ProfilePage portal="farmer" />} />
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/disease-detect" element={<DiseaseDetectPage />} />
-              <Route path="/soil-classify" element={<SoilClassifyPage />} />
-              <Route path="/lands" element={<LandsPage />} />
-              <Route path="/land/:id" element={<LandDetailPage />} />
-              <Route path="/weather" element={<FarmingWeatherPage />} />
-              <Route path="/marketplace" element={<MarketplacePage />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
-              <Route path="/orders" element={<FarmerOrdersPage />} />
-              <Route path="/consultation" element={<FarmerConsultationPage />} />
-              <Route path="/consultation/room/:id" element={<ConsultationRoomPage />} />
-              <Route path="/tracks" element={<FarmerTracksPage />} />
-              <Route path="/tracks/:id" element={<TrackDetailPage />} />
-              <Route path="/market-trends" element={<MarketPredictionPage />} />
-              <Route path="/profit-loss" element={<FarmerProfitLossPage />} />
-              <Route path="/billing" element={<FarmerBillingPage />} />
-              <Route path="/payment/success" element={<PaymentSuccessPage />} />
-            </Route>
+                {/* Farmer routes (Protected) */}
+                <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/profile" element={<ProfilePage portal="farmer" />} />
+                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/disease-detect" element={<DiseaseDetectPage />} />
+                  <Route path="/soil-classify" element={<SoilClassifyPage />} />
+                  <Route path="/lands" element={<LandsPage />} />
+                  <Route path="/land/:id" element={<LandDetailPage />} />
+                  <Route path="/weather" element={<FarmingWeatherPage />} />
+                  <Route path="/marketplace" element={<MarketplacePage />} />
+                  <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/orders" element={<FarmerOrdersPage />} />
+                  <Route path="/consultation" element={<FarmerConsultationPage />} />
+                  <Route path="/consultation/room/:id" element={<ConsultationRoomPage />} />
+                  <Route path="/tracks" element={<FarmerTracksPage />} />
+                  <Route path="/tracks/:id" element={<TrackDetailPage />} />
+                  <Route path="/market-trends" element={<MarketPredictionPage />} />
+                  <Route path="/profit-loss" element={<FarmerProfitLossPage />} />
+                  <Route path="/billing" element={<FarmerBillingPage />} />
+                  <Route path="/payment/success" element={<PaymentSuccessPage />} />
+                </Route>
 
-            {/* Staff routes (Protected) */}
-            <Route path="/staff" element={<StaffLayout />}>
-              <Route index element={<StaffDashboardPage />} />
-              <Route path="profile" element={<ProfilePage portal="staff" />} />
-              <Route path="marketplace" element={<StaffMarketplacePage />} />
-              <Route path="sales-kanban" element={<StaffSalesKanban />} />
-              <Route path="consultation" element={<StaffConsultationPage />} />
-              <Route path="consultation/room/:id" element={<ConsultationRoomPage />} />
-              <Route path="finance" element={<StaffFinancePage />} />
-              <Route path="service" element={<StaffServicePage />} />
-              <Route path="model-hub" element={<StaffModelHubPage />} />
-              <Route path="users" element={<StaffUserManagementPage />} />
-              <Route path="audit-logs" element={<StaffAuditLogsPage />} />
-            </Route>
+                {/* Staff routes (Protected) */}
+                <Route path="/staff" element={<StaffLayout />}>
+                  <Route index element={<StaffDashboardPage />} />
+                  <Route path="profile" element={<ProfilePage portal="staff" />} />
+                  <Route path="marketplace" element={<StaffMarketplacePage />} />
+                  <Route path="sales-kanban" element={<StaffSalesKanban />} />
+                  <Route path="consultation" element={<StaffConsultationPage />} />
+                  <Route path="consultation/room/:id" element={<ConsultationRoomPage />} />
+                  <Route path="finance" element={<StaffFinancePage />} />
+                  <Route path="service" element={<StaffServicePage />} />
+                  <Route path="model-hub" element={<StaffModelHubPage />} />
+                  <Route path="users" element={<StaffUserManagementPage />} />
+                  <Route path="audit-logs" element={<StaffAuditLogsPage />} />
+                </Route>
 
-            {/* Catch-all: redirect unknown paths to home */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          </BrowserRouter>
+                {/* Catch-all: redirect unknown paths to home */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
           </CartProvider>
         </AuthProvider>
       </ThemeProvider>
-  </LanguageProvider>
+    </LanguageProvider>
   );
 }
 
